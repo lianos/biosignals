@@ -1,0 +1,17 @@
+Package: edge1d
+Title: Performs multi-scale edge detection on 1D data.
+Version: 0.1
+Author: Steve Lianoglou
+Maintainer: Steve Lianoglou <slianoglou@gmail.com>
+Description: Detects edges in 1D space via canny edge detector.
+  .
+  This code is adapted from the MATLAB edge_detector_1d written
+  by the CISMM group at UNC. See URLs for reference.
+License: GPL (>= 3)
+Depends: R (>= 2.13.0), Rcpp (>= 0.9.7)
+Imports: Rcpp, methods
+Suggests: testthat (>= 0.5)
+LinkingTo: Rcpp
+URL: http://lianos.github.com/edge1d/,
+     http://cismm.cs.unc.edu/resources/tutorials/edge-detector-1d-tutorial/
+Repository: CRAN
