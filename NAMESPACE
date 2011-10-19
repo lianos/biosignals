@@ -1,0 +1,14 @@
+useDynLib(edge1d)
+
+export(
+  convolve1d,
+  
+  createGaussScaleSpace,
+  analyzeEdges,
+  findLocalExterma,
+  
+  kdeSmooth,
+  generateKernel
+)
+
+import()
