@@ -1,17 +1,19 @@
-Package: edge1d
-Title: Performs multi-scale edge detection on 1D data.
-Version: 0.1
+Package: biosignals
+Title: Smooth and find peaks/edges in real valued signal vectors.
+Version: 0.1.0
 Author: Steve Lianoglou
 Maintainer: Steve Lianoglou <slianoglou@gmail.com>
-Description: Detects edges in 1D space via canny edge detector.
+Description: Do many things you want to do to "signal vectors."
   .
-  This code is adapted from the MATLAB edge_detector_1d written
-  by the CISMM group at UNC. See URLs for reference.
+  The part of the code in this package to find edges in a 1d signal is adapted
+  from the MATLAB edge_detector_1d written by the CISMM group at UNC.
+  .
+  See URLs for references.
 License: GPL (>= 3)
 Depends: R (>= 2.13.0), Rcpp (>= 0.9.7)
-Imports: Rcpp, methods
+Imports: Rcpp, methods, IRanges
 Suggests: testthat (>= 0.5)
 LinkingTo: Rcpp
-URL: http://lianos.github.com/edge1d/,
+URL: http://lianos.github.com/biosignals/,
      http://cismm.cs.unc.edu/resources/tutorials/edge-detector-1d-tutorial/
 Repository: CRAN

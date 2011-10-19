@@ -1,7 +1,9 @@
-An R package to do edge detection on 1D data via the Canny edge detector.
+An R package to play with "signal" vectors.
 
-This code is adapted from the MATLAB edge_detector_1d written by the CISMM
-group at UNC:
+Smooth, find peaks and edges in signals.
+
+This code for edge detection is adapted from the MATLAB edge_detector_1d
+written by the CISMM group at UNC:
 
 http://cismm.cs.unc.edu/resources/tutorials/edge-detector-1d-tutorial/
 
