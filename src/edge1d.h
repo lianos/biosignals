@@ -13,7 +13,10 @@ convolve_1d(std::vector<double> x, std::vector<double> kernel, bool rescale);
 // http://hellmund.blogspot.com/2011/02/example-using-rcpp-inline-and-fftw.html
 
 // ------------------------------------------------------------------ Interface
-RcppExport SEXP Rconvolve_1d(SEXP x_, SEXP kernel_, SEXP rescale_);
-RcppExport SEXP fencepost_convolve_1d(SEXP x_, SEXP kernel_, SEXP starts_, SEXP ends_);
+RcppExport SEXP
+Rconvolve_1d(SEXP x_, SEXP kernel_, SEXP rescale_);
+
+RcppExport SEXP
+Rfencepost_convolve_1d(SEXP x_, SEXP kernel_, SEXP starts_, SEXP ends_);
 
 #endif
