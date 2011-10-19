@@ -13,7 +13,6 @@ convolve_1d(std::vector<double> *x, std::vector<double> *kernel, bool rescale) {
   double val;
   
   std::vector<double> *result = new std::vector<double>(N, 0.0);
-  Rprintf("result vector of size %d is allocated\n", result->size());
   max_x = (*x)[0];
   max_result = 0;
 
@@ -27,6 +26,9 @@ convolve_1d(std::vector<double> *x, std::vector<double> *kernel, bool rescale) {
   
   // Main convolution
   for (i = klen; i < x->size() + klen; i++) {
+    if ((*x)[i - klen] > max_x) {
+      max_x = (*x)[i - klen];
+    }
     for (j = 0; j < klen; j++) {
       val = (*result)[i+j] + (*x)[i - klen] * (*kernel)[j];
       (*result)[i+j] = val;
@@ -43,13 +45,21 @@ convolve_1d(std::vector<double> *x, std::vector<double> *kernel, bool rescale) {
       (*result)[i+j] = val;
     }
   }
-  
-  scale_factor = max_x / max_result;
-  
+    
   /* remove head/tail padding */
   int naxe = 1.5 * klen;
   result->erase(result->begin(), result->begin() + naxe);
   result->erase(result->begin() + x->size(), result->end());
+  
+  scale_factor = max_x / max_result;
+  if (rescale) {
+    for (i = 0; i < result->size(); i++) {
+      // Rprintf("scaling %d: %.2f -> %.2f\n", i, result[i], result[i] * scale_factor);
+      (*result)[i] *= scale_factor;
+    }
+    // Rprintf("done scaing\n");
+  }
+  
   return result;
 }
 
@@ -61,11 +71,25 @@ SEXP Rconvolve_1d(SEXP x_, SEXP kernel_, SEXP rescale_) {
   return Rcpp::wrap(*result);
 }
 
-SEXP Rfencepost_convolve_1d(SEXP x_, SEXP kernel_, SEXP starts_, SEXP ends_) {
+SEXP Rfencepost_convolve_1d(SEXP x_, SEXP kernel_, SEXP starts_, SEXP ends_,
+                            SEXP rescale_) {
   std::vector<double> x = Rcpp::as<std::vector<double> >(x_);
   std::vector<double> kernel = Rcpp::as<std::vector<double> >(kernel_);
   Rcpp::IntegerVector starts(starts_);
   Rcpp::IntegerVector ends(ends_);
+  bool rescale = Rcpp::as<bool>(rescale_);
+  Rcpp::NumericVector out(x.size());
+  int start,end;
   
-  return R_NilValue;
+  for (int i = 0; i < starts.size(); i++) {
+    start = starts[i] - 1; // R -> C indexing
+    end = ends[i] - 1;
+    std::vector<double> tmp = std::vector<double>(end - start + 1, 0.0);
+    std::copy(x.begin() + start, x.begin() + end, tmp.begin());
+    std::vector<double> *conv = convolve_1d(&tmp, &kernel, rescale);
+    std::copy(conv->begin(), conv->end(), out.begin() + start);
+    delete conv;
+  }
+  
+  return Rcpp::wrap(out);
 }

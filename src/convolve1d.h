@@ -17,6 +17,7 @@ RcppExport SEXP
 Rconvolve_1d(SEXP x_, SEXP kernel_, SEXP rescale_);
 
 RcppExport SEXP
-Rfencepost_convolve_1d(SEXP x_, SEXP kernel_, SEXP starts_, SEXP ends_);
+Rfencepost_convolve_1d(SEXP x_, SEXP kernel_, SEXP starts_, SEXP ends_,
+                       SEXP rescale_);
 
 #endif
