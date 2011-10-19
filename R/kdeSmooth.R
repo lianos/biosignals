@@ -130,6 +130,17 @@ generateKernel <- function(kernel.type='normal', bandwidth=1L, normalize=TRUE, .
 
   if (kernel.type %in% c('normal', 'gaussian')) {
     kval <- dnorm(seq(-3, 3, length.out=win.len), mu, sd)
+    if (is.numeric(args$deriv)) {
+      deriv <- args$deriv
+      center <- ceiling(length(kval) / 2)
+      krange <- seq_along(kval)
+      derivs <- matrix(1, nrow=5, ncol=length(kval))
+      derivs[2,] <- -((krange - center) / (sd^2))
+      derivs[3,] <- ((krange - center)^2 - (sd^2)) / sd^4
+      derivs[4,] <- -((krange - center)^3 - 3*sd^2*(krange - center)) / sd^6
+      derivs[5,] <- ((krange - center)^4 - 6*sd^2*(krange-center)^2 + 3*sd^4) / sd^8
+      kval <- kval * derivs[deriv + 1L,]
+    }
   } else if (kernel.type %in% c('unform', 'rectangular')) {
     kval <- rep(1, win.len)
   } else if (kernel.type == 'triangular') {

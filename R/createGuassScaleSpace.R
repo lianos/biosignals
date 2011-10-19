@@ -24,7 +24,7 @@ createGaussScaleSpace <- function(x, deriv=0, scales=1:20,
   m
 }
 
-.gaussianKernel1D <- function(sigma, bandwidth=sigma * 3, deriv=0) {
+.gaussianKernel1D <- function(mean=0, sigma=1, bandwidth=sigma * 3, deriv=0) {
   stopifnot(deriv <= 5)
   ## generateKernel creates a window length using this function:
   ## win.len <- 2L * ceiling(bandwidth) + 1L
@@ -36,10 +36,11 @@ createGaussScaleSpace <- function(x, deriv=0, scales=1:20,
   ##sbandwidth <- width * ceiling(sigma)
   ##k <- generateKernel('normal', bandwidth=sbandwidth, sd=sigma)
   
-  # range <- 1:(2*width*ceiling(sigma) + 1)
   range <- seq(1, 2 * ceiling(bandwidth) + 1)
   center <- ceiling(length(range) / 2)
-  k <- (1 / (sigma * sqrt(2*pi))) * exp(-((range - center)^2) / (2*sigma^2))
+  # k <- (1 / (sigma * sqrt(2*pi))) * exp(-((range - center)^2) / (2*sigma^2))
+  k <- (1 / (sigma * sqrt(2*pi))) * exp(-((range - center)^2) / (2*sigma))
+  
   if (deriv > 0) {
     ## Calculate upto 5th order derivative derivs
     center <- ceiling(length(k) / 2)
@@ -53,3 +54,33 @@ createGaussScaleSpace <- function(x, deriv=0, scales=1:20,
   }
   k
 }
+
+.gaussianKernel1D <- function(mean=0, sigma=1, bandwidth=sigma * 3, deriv=0) {
+  stopifnot(deriv <= 5)
+  ## generateKernel creates a window length using this function:
+  ## win.len <- 2L * ceiling(bandwidth) + 1L
+  ## 
+  ## The MATLAB GuassianKernel1D calculates window width to be
+  ## 2 * width(=3) * ceiling(scale) + 1 
+  ## 
+  ## We need bandwidth = width * ceiling(scale)
+  ##sbandwidth <- width * ceiling(sigma)
+  ##k <- generateKernel('normal', bandwidth=sbandwidth, sd=sigma)
+  
+  vals <- seq(-3, 3, length.out=2 * ceiling(bandwidth) + 1)
+  # k <- (1 / (sigma * sqrt(2*pi))) * exp(-(vals - mean)^2 / (2*sigma))
+  k <- dnorm(vals, mean, sigma)
+
+  if (deriv > 0) {
+    ## Calculate upto 5th order derivative derivs
+    krange <- seq(-3, 3, length.out=length(k))
+    derivs <- matrix(1, nrow=5, ncol=length(k))
+    derivs[2,] <- -(krange / (sigma^2))
+    derivs[3,] <- (krange^2 - (sigma^2)) / sigma^4
+    derivs[4,] <- -(krange^3 - 3*sigma^2*krange) / sigma^6
+    derivs[5,] <- (krange^4 - 6*sigma^2*(krange^2) + 3*sigma^4) / sigma^8
+    k <- k * derivs[deriv + 1L,]
+  }
+  k
+}
+
