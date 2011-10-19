@@ -1,4 +1,4 @@
-#include "edge1d.h"
+#include "convolve1d.h"
 
 // TODO: You can use two separate vectors to smooth over padded heads/tails
 //       and incorporate those into main convolution so you don't have to
