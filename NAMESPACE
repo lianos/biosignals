@@ -1,4 +1,4 @@
-useDynLib(edge1d)
+useDynLib(biosignals)
 
 export(
   convolve1d,
