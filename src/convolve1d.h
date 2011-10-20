@@ -1,9 +1,7 @@
 #ifndef __EDGE1D_H__
 #define __EDGE1D_H__
 
-#include <RcppCommon.h>
-// Override wrap and as?
-#include <Rcpp.h>
+#include "biosignals.h"
 
 // ------------------------------------------------------------------- Internal
 std::vector<double> *

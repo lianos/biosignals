@@ -9,6 +9,8 @@ function(x, kernel='normal', rescale=TRUE, bandwidth=20, deriv=0,
   stopifnot(is.numeric(kernel))
   stopifnot(is.logical(rescale) && length(rescale) == 1L)
   
+  kernel <- rev(kernel)
+  
   if (!is.null(starts) || !is.null(ends)) {
     if (is.null(starts) || is.null(ends)) {
       stop("both starts and ends need to be defined")

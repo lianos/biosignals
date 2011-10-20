@@ -2,13 +2,16 @@ useDynLib(biosignals)
 
 export(
   convolve1d,
-  
+
   createGaussScaleSpace,
   analyzeEdges,
   findLocalExterma,
-  
+
   kdeSmooth,
-  generateKernel
+  generateKernel,
+
+  slidingMax,
+  slidingMin
 )
 
-import()
+
