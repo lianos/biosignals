@@ -13,6 +13,6 @@ RcppExport SEXP Rsliding_max(SEXP x_, SEXP k_);
 RcppExport SEXP Rsliding_min(SEXP x_, SEXP k_);
 
 RcppExport SEXP
-turnpoints(SEXP x_, SEXP threshold_, SEXP wlength_);
+Rturnpoints(SEXP x_, SEXP threshold_, SEXP wlength_);
 
 #endif
