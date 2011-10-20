@@ -5,48 +5,58 @@
 #include <iostream>
 #include <vector>
 
-void update_min_window();
-void update_max_window();
-
+template <typename T>
+void update_window_stats(std::vector<T> &x, int &back, int &front,
+                         int &current, T &val, int win_length, int i,
+                         bool min);
 
 template <typename T>
-std::vector<T> sliding_window_minimum(std::vector<T> &ARR, int K) {
-    std::vector<T> idx(ARR.size());
+void update_window_stats(std::vector<T> &x, int &back, int &front,
+                         int &current, T &val, int win_length, int i,
+                         bool is_min) {
+    int j;
+    while ((front - i <= win_length) && (front < x.size())) {
+        // Add elements to the fronteir
+        if ((is_min && x[front] < val) || (!is_min && x[front] > val)) {
+            current = front;
+            val = x[current];
+        }
+        front++;
+    }
+    front--;
+        
+    // remove elements from the tail
+    while ((i - back > win_length) && (back <= x.size() - win_length)) {
+        back++;
+        if (back > current) {
+            // The previous min/max just fell outside of the window. Run
+            // through the remainder of this window to find the max up
+            // through its end
+            current = back;
+            val = x[current];
+            for (j = back + 1; j <= front; j++) {
+                if ((is_min && x[j] < val) || (!is_min && x[j] > val)) {
+                    current = front;
+                    val = x[current];
+                }
+            }
+            
+        } // previous min/max fell outside of window
+    } // removing elements from tail
+}
+
+template <typename T>
+std::vector<T> sliding_window_minimum(std::vector<T> &x, int K) {
+    std::vector<T> idx(x.size());
     if (idx.size() == 0) {
         return idx;
     }
 
-    T cval = ARR[0];
+    T cval = x[0];
     int fidx = 0, bidx = 0, cidx = 0;
 
-    for (int i = 0; i < ARR.size(); i++) {
-        // Add elements at the frontier
-        while ((fidx - i <= K) && fidx < ARR.size()) {
-            if (ARR[fidx] < cval) {
-                cval = ARR[fidx];
-                cidx = fidx;
-            }
-            fidx++;
-        }
-        fidx--;
-
-        // Remove elements from the tail
-        while ((i - bidx > K) && (bidx <= ARR.size() - K)) {
-            bidx++;
-            // if the max is at bidx, we need to find the next max
-            // this can go past position i
-            if (bidx > cidx) {
-                cval = ARR[bidx];
-                cidx = bidx;
-                for (int j = bidx + 1; j <= fidx; j++) {
-                    if (ARR[j] < cval) {
-                        cval = ARR[j];
-                        cidx = j;
-                    }
-                }
-            }
-        }
-
+    for (int i = 0; i < x.size(); i++) {
+        update_window_stats(x, bidx, fidx, cidx, cval, K, i, true);
         idx[i] = cval;
     }
 
@@ -54,43 +64,17 @@ std::vector<T> sliding_window_minimum(std::vector<T> &ARR, int K) {
 }
 
 template <typename T>
-std::vector<T> sliding_window_maximum(std::vector<T> &ARR, int K) {
-    std::vector<T> idx(ARR.size());
+std::vector<T> sliding_window_maximum(std::vector<T> &x, int K) {
+    std::vector<T> idx(x.size());
     if (idx.size() == 0) {
         return idx;
     }
 
-    T cval = ARR[0];
+    T cval = x[0];
     int fidx = 0, bidx = 0, cidx = 0;
 
-    for (int i = 0; i < ARR.size(); i++) {
-        // Add elements at the frontier
-        while ((fidx - i <= K) && fidx < ARR.size()) {
-            if (ARR[fidx] > cval) {
-                cval = ARR[fidx];
-                cidx = fidx;
-            }
-            fidx++;
-        }
-        fidx--;
-
-        // Remove elements from the tail
-        while ((i - bidx > K) && (bidx <= ARR.size() - K)) {
-            bidx++;
-            // if the max is at bidx, we need to find the next max
-            // this can go past position i
-            if (bidx > cidx) {
-                cval = ARR[bidx];
-                cidx = bidx;
-                for (int j = bidx + 1; j <= fidx; j++) {
-                    if (ARR[j] > cval) {
-                        cval = ARR[j];
-                        cidx = j;
-                    }
-                }
-            }
-        }
-
+    for (int i = 0; i < x.size(); i++) {
+        update_window_stats(x, bidx, fidx, cidx, cval, K, i, false);
         idx[i] = cval;
     }
 
@@ -104,46 +88,24 @@ std::vector<T> sliding_window_maximum(std::vector<T> &ARR, int K) {
 template <typename T>
 std::pair< std::vector<int>, std::vector<int> >
 local_turnpoints(std::vector<T> &x, int K) {
-    std::vector<T> idx(ARR.size());
-    if (idx.size() == 0) {
-        return idx;
+    std::vector<int> mins;
+    std::vector<int> maxs;
+    std::pair< std::vector<int>, std::vector<int> > result;
+    
+    if (x.size() == 0) {
+        return std::make_pair(mins, maxs);
     }
 
-    T cmin = ARR[0];
-    T cmax = ARR[0];
+    T cmin = x[0];
+    T cmax = x[0];
     int fidx_min = 0, bidx_min = 0, cidx_min = 0;
     int fidx_max = 0, bidx_max = 0, cidx_max = 0;
 
-    for (int i = 0; i < ARR.size(); i++) {
-        // Add elements at the frontier
-        while ((fidx - i <= K) && fidx < ARR.size()) {
-            if (ARR[fidx] > cval) {
-                cval = ARR[fidx];
-                cidx = fidx;
-            }
-            fidx++;
-        }
-        fidx--;
-
-        // Remove elements from the tail
-        while ((i - bidx > K) && (bidx <= ARR.size() - K)) {
-            bidx++;
-            // if the max is at bidx, we need to find the next max
-            // this can go past position i
-            if (bidx > cidx) {
-                cval = ARR[bidx];
-                cidx = bidx;
-                for (int j = bidx + 1; j <= fidx; j++) {
-                    if (ARR[j] > cval) {
-                        cval = ARR[j];
-                        cidx = j;
-                    }
-                }
-            }
-        }
-
-        idx[i] = cval;
+    for (int i = 0; i < x.size(); i++) {
     }
+    
+    result = std::make_pair(mins, maxs);
+    return result;
 }
 
 
