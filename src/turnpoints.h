@@ -2,15 +2,11 @@
 #define __TURNPOINTS_H__
 
 #include "biosignals.h"
+#include "vectors.h"
 
 template <typename T>
-std::vector<T> sliding_window_minimum(std::vector<T> & ARR, int K);
-
-template <typename T>
-std::vector<T> sliding_window_maximum(std::vector<T> & ARR, int K);
-
-RcppExport SEXP Rsliding_max(SEXP x_, SEXP k_);
-RcppExport SEXP Rsliding_min(SEXP x_, SEXP k_);
+std::pair< std::vector<int>, std::vector<int> >
+local_turnpoints(std::vector<T> &x, double threshold, int K);
 
 RcppExport SEXP
 Rturnpoints(SEXP x_, SEXP threshold_, SEXP wlength_);

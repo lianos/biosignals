@@ -9,7 +9,7 @@ function(x, kernel='normal', rescale=TRUE, bandwidth=20, deriv=0,
   stopifnot(is.numeric(kernel))
   stopifnot(is.logical(rescale) && length(rescale) == 1L)
   
-  kernel <- rev(kernel)
+  # kernel <- rev(kernel)
   
   if (!is.null(starts) || !is.null(ends)) {
     if (is.null(starts) || is.null(ends)) {

@@ -5,5 +5,7 @@
 // Override wrap and as?
 #include <Rcpp.h>
 
+#define SIGN(x) ((x >= 0) ? 1 : -1)
+
 
 #endif

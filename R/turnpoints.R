@@ -22,11 +22,3 @@ turnpoints <- function(x, threshold=0.5, win.length=1L,
 
   list(maxima=maxima, minima=minima)
 }
-
-slidingMax <- function(x, k=5L) {
-  ret <- .Call('Rsliding_max', as.numeric(x), as.integer(k))
-}
-
-slidingMin <- function(x, k=5L) {
-  .Call('Rsliding_min', as.numeric(x), as.integer(k))
-}
