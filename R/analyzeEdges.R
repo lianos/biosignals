@@ -34,33 +34,25 @@ analyzeEdges <- function(x, scales=c(1, 2, 4, 8),
 }
 
 ##' Detects edges across a signal vector
+##'
+##' Locations where the smoothed second derivative crosses x=0 indicate
+##' a potential edge.
+##'
+##' The (local) magnitude of the peak in the first derivative are used to filter
+##' potential edges that are due to noise ... tweak this using the threshold
+##' and hte edge.window parameter.
 detectEdges <- function(x, bandwidth=10, mu=0, sd=1, threshold=0.15,
                         edge.window=2*bandwidth, thresh.mult=0.3, ...) {
   k1 <- generateKernel('gaussian', bandwidth=bandwidth, mu=mu, sd=sd, deriv=1)
   k2 <- generateKernel('gaussian', bandwidth=bandwidth, mu=mu, sd=sd, deriv=2)
-  k3 <- generateKernel('gaussian', bandwidth=bandwidth, mu=mu, sd=sd, deriv=3)
+  ## k3 <- generateKernel('gaussian', bandwidth=bandwidth, mu=mu, sd=sd, deriv=3)
 
   x1 <- convolve1d(x, k1) ## first derivative of data
   x2 <- convolve1d(x, k2) ## locates peak of first deriv when this crosses 0
-  x3 <- convolve1d(x, k3) ## how steep is the edge?
+  ## x3 <- convolve1d(x, k3) ## how steep is the edge?
 
   ## Find where second deriv crosses 0
   zeroes <- zeroCrossings(x2)
-
-  ## Use x1 to filter out zero crossings that represent noise
-  ## ax1 <- as.numeric(abs(x1))
-  ## mx <- slidingMax(ax1, k=edge.window)
-  ## potential <- which(ax1 >= mx * threshold)
-
-  ## ax3 <- abs(x3)
-  ## ## mx <- max(abs(x3))
-  ## ## potential <- which(abs(x3) >= threshold * mx)
-  ## mx <- slidingMax(ax3, k=edge.window)
-  ## potential <- which(ax3 >= threshold * mx)
-
-  ## edges <- intersect(zeroes, potential)
-  ## edges.start <- edges[as.logical(x2[edges - 1] > 0)]
-  ## edges.end <- edges[as.logical(x2[edges - 1] < 0)]
 
   ## Filter out edges by ensuring that the value at the peaks of x1 (deriv 1)
   ## "clear" the minima of their surround for start of edges, vice versa
@@ -73,7 +65,7 @@ detectEdges <- function(x, bandwidth=10, mu=0, sd=1, threshold=0.15,
   x1s <- x1
   x1s[x1s <= 1] <- 1 ## only look at sliding minima for values north of 0
   min.x1 <- slidingMin(x1s, bandwidth)
-  ## min.x1[edges.start] / x1[edges.start]
+
   start.offsets <- (threshold/2) * as.numeric(x1[edges.start])
   es <- edges.start[(min.x1[edges.start] + start.offsets) /
                     (as.numeric(x1[edges.start]) + start.offsets) < threshold]
@@ -88,8 +80,7 @@ detectEdges <- function(x, bandwidth=10, mu=0, sd=1, threshold=0.15,
   x1e <- x1
   x1e[x1e >= -1] <- -1 ## only look for sliding maxima for vals south of 0
   max.x1 <- slidingMax(x1e, bandwidth)
-  ## tmn <- as.numeric(thresh.mult * x1[edges.end]) - 1 ## -1 in case x1[] == 0
-  ## ee <- edges.end[(max.x1[edges.end] + tmn) / tmn < threshold]
+
   end.offsets <- threshold * as.numeric(x1[edges.end])
   ee <- edges.end[(max.x1[edges.end] + end.offsets) /
                   (as.numeric(x1[edges.end] + end.offsets)) < threshold]
@@ -97,6 +88,85 @@ detectEdges <- function(x, bandwidth=10, mu=0, sd=1, threshold=0.15,
   list(start=es, end=ee)
 }
 
+cleanEdges <- function(x, bandwidth, starts, ends,
+                       bandwidths=ceiling(c(.8 * bandwidth, .6 * bandwidth)),
+                       .strand='+', max.iter=10) {
+  ## If there are no fenceposts, try to shrink bandwith
+  while ((length(starts) == 0 || length(ends) == 0) && length(bandwidths)) {
+    bandwidth <- ceiling(bandwidths[1])
+    ## cat("trimming fat w/ bandwidth:", bandwidth, "\n")
+    de <- detectEdges(x, bandwidth=bandwidth)
+    ends <- de$end
+    starts <- de$start
+    bandwidths <- bandwidths[-1]
+  }
+
+
+  if (length(starts) == 0 || length(ends) == 0) {
+    obs.quantiles <- defineQuantilePositions(x, IRanges(1, length(x)))
+  } else {
+    obs.quantiles <- data.frame(start=1, end=length(x))
+  }
+
+  if (length(starts) == 0) {
+    starts <- obs.quantiles[[1L]][1L]
+  }
+  if (length(ends) == 0) {
+    ends <- obs.quantiles[[ncol(obs.quantiles)]][[1L]]
+  }
+
+  all.bounds <- c(starts, ends)
+  o <- order(all.bounds, decreasing=.strand == '+')
+  df <- data.frame(pos=all.bounds,
+                   start=c(rep(TRUE, length(starts)), rep(FALSE, length(ends))))
+  df <- df[o,]
+  r <- rle(df$start)
+  i <- 1
+
+  while(length(axe <- which(r$lengths > 1)) && i <= max.iter) {
+    df <- df[-sum(r$lengths[1:axe]),]
+    r <- rle(df$start)
+    i <- i + 1
+  }
+
+
+  if (.strand == '+') {
+    df <- df[rev(seq(nrow(df))),]
+  }
+
+  ret <- list(start=df$pos[df$start], end=df$pos[!df$start])
+  if (length(ret$end) == 0 || length(ret$start) == 0) {
+    stop("0-length edges should not have happend w/ the quantile trick!")
+  }
+
+  ret
+}
+
+detectPeaksByEdge <- function(x, bandwidth=40, mu=0, sd=1, threshold=0.15,
+                              edge.window=2*bandwidth, do.clean=TRUE,
+                              bandwidths=c(30, 21), .strand='+', ...) {
+  edges <- detectEdges(x, bandwidth=bandwidth, mu=mu, sd=sd,
+                       threshold=threshold, edge.window=edge.window, ...)
+  looks.fishy <- (length(edges$start) != length(edges$end)) ||
+    length(edges$start) == 0
+
+  if (do.clean) {
+    edges <- cleanEdges(x, bandwidth, edges$start, edges$end,
+                        bandwidths=bandwidths, .strand=.strand)
+  }
+
+  ret <- tryCatch({
+    ir <- IRanges(edges$start, edges$end)
+    values(ir) <- DataFrame(fishy=looks.fishy && do.clean)
+    ir
+  }, error=function(e) {
+    ir <- IRanges(1, 1)
+    values(ir) <- DataFrame(fishy=TRUE)
+    ir
+  })
+
+  ret
+}
 ################################################################################
 ## Debugging
 ## -----------------------------------------------------------------------------
@@ -145,20 +215,20 @@ visualizeEdges <- function(x, mu=0, sd=1, bandwidth=10, threshold=0.15,
   lines(x3, col='orange', lwd=1, lty='dashed')
 
 
-  legend('bottomright', legend=c('dervi1', 'deriv2'), text.col=c('red', 'green'))
+  legend('bottomright', legend=c('dervi1', 'deriv2'),
+         text.col=c('red', 'green'))
 
-  ## zz <- zeroCrossings(x2)
-  ## mx <- slidingMax(abs(x1), k=bandwidth * 2)
-  ## possibly <- which(abs(x1) >= mx * threshold)
-  ## edges <- intersect(zz, possibly)
-  edges <- detectEdges(x, bandwidth=bandwidth, mu=mu, sd=sd, threshold=threshold,
-                       edge.window=edge.window)
-  if (length(edges$start) != length(edges$end)) {
-    cat("unbalanced ... cleaning ...\n")
-    edges <- cleanBoundaries(edges$start, edges$end, length(x), .strand=.strand)
-  }
-  abline(v=edges$start, col='green', lty='dashed', lwd=2)
-  abline(v=edges$end, col='red', lty='dashed', lwd=2)
+  ## edges <- detectEdges(x, bandwidth=bandwidth, mu=mu, sd=sd, threshold=threshold,
+  ##                      edge.window=edge.window)
+  ## if (length(edges$start) != length(edges$end) || length(edges$start) == 0) {
+  ##   cat("unbalanced ... cleaning ...\n")
+  ##   edges <- cleanBoundaries(x, bandwidth, edges$start, edges$end,
+  ##                            bandwidths=c(30, 21), .strand=.strand)
+  ## }
+  edges <- detectPeaksByEdge(x, bandwidth=bandwidth, mu=mu, sd=sd,
+                             threshold=threshold, .strand=.strand)
+  abline(v=start(edges), col='green', lty='dashed', lwd=2)
+  abline(v=end(edges), col='red', lty='dashed', lwd=2)
 
   if (is(nt, 'DNAString') || is.character(nt)) {
     acgt <- c(A='green', C='blue', G='darkorange', T='red')
@@ -174,35 +244,6 @@ visualizeEdges <- function(x, mu=0, sd=1, bandwidth=10, threshold=0.15,
   invisible(edges)
 }
 
-cleanBoundaries <- function(starts, ends, len, .strand='+', max.iter=10) {
-  all.bounds <- c(starts, ends)
-  o <- order(all.bounds, decreasing=.strand == '+')
-  df <- data.frame(pos=all.bounds,
-                   start=c(rep(TRUE, length(starts)), rep(FALSE, length(ends))))
-  df <- df[o,]
-  r <- rle(df$start)
-  i <- 1
-
-  while(length(axe <- which(r$lengths > 1)) && i <= max.iter) {
-    df <- df[-sum(r$lengths[1:axe]),]
-    r <- rle(df$start)
-    i <- i + 1
-  }
-
-
-  if (.strand == '+') {
-    df <- df[rev(seq(nrow(df))),]
-  }
-
-  ret <- list(start=df$pos[df$start], end=df$pos[!df$start])
-  if (length(ret$end) == 0) {
-    ret$end <- len
-  }
-  if (length(df$start) == 1) {
-    ret$start <- 1
-  }
-  ret
-}
 
 if (FALSE) {
   library(biosignals)
@@ -219,39 +260,18 @@ if (FALSE) {
   edges <- lapply(1:length(islands), function(i) {
     istart <- start(islands[i]) - 10
     iend <- end(islands[i]) + 10
-    tryCatch({
-      e <- detectEdges(as.numeric(cvr[istart:iend]), bandwidth=40)
-    }, error=function(e) cat("error:", i, "\n"))
-
-    if (length(e$start) != length(e$end)) {
-      cat("unmatched:", i, " ... decreasing bandwidth\n")
-      e2 <- detectEdges(as.numeric(cvr[istart:iend]), bandwidth=20)
-      if (length(e2$start) != length(e2$end)) {
-        cat('... still screwed, just boxing it')
-        e <- cleanBoundaries(e$start, e$end, len=iend - istart + 1)
-      } else {
-        e <- e2
-      }
-
-
-      if (length(e$start) != length(e$end)) {
-        cat('... BAD clean\n')
-      } else {
-        cat('... cleaned\n')
-      }
-    }
-    if (length(e$start) + length(e$end) != 2) {
-      cat("more than 1:", i, "\n")
-    }
-    e
+    e <- detectPeaksByEdge(as.numeric(cvr[istart:iend]), bandwidth=40, .strand='+')
+    shift(e, istart)
   })
+
+
 
   for (i in 1:30) {
     istart <- start(islands[i]) - 10
     iend <- end(islands[i]) + 10
     cat(sprintf("%d : chr21:%d-%d\n", i + 1, istart, iend))
     quartz()
-    de <- visualizeEdges(cvr[istart:iend], bandwidth=50, nt=bchr[(istart):(iend)])
+    de <- visualizeEdges(cvr[istart:iend], bandwidth=40, nt=bchr[(istart):(iend)])
   }
 
 }

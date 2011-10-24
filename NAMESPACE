@@ -12,7 +12,8 @@ export(
 
   slidingMax,
   slidingMin,
-  zeroCrossings
+  zeroCrossings,
+  quantilePositions
 )
 
 
