@@ -16,7 +16,8 @@
 ##' @param normalize \code{logical(1)}: normalizes kernel if (\code{TRUE}).
 ##'
 ##' @return a vector with kernel values
-generateKernel <- function(kernel.type='normal', bandwidth=1L, normalize=TRUE, ...) {
+generateKernel <- function(kernel.type='normal', bandwidth=1L, normalize=TRUE,
+                           ...) {
   kernel.type <- match.arg(kernel.type, .convolutionKernels())
   if (bandwidth <= 0) {
     stop("kernel bandwidth must be > 0")
@@ -25,7 +26,7 @@ generateKernel <- function(kernel.type='normal', bandwidth=1L, normalize=TRUE, .
   args <- list(...)
   mu <- if (!is.null(args$mu)) args$mu else 0
   sd <- if (!is.null(args$sd)) args$sd else 1
-  
+
   ## lofg = laplacian of gaussian == first deriv of gaus
   ## dog = difference of gaussians
   is.gauss.like <- c('normal', 'gaussian', 'lofg', 'dog')
@@ -35,14 +36,14 @@ generateKernel <- function(kernel.type='normal', bandwidth=1L, normalize=TRUE, .
     if (missing(bandwidth)) {
       bandwidth <- ceiling(3 * sd)
     }
-    win.len <- ceiling(2L * bandwidth + 1L) 
+    win.len <- ceiling(2L * bandwidth + 1L)
     # center <- ceiling(win.len / 2)
     kin <- seq(-3*sd, 3*sd, length.out=win.len) + mu
   } else {
     win.len <- 2L * ceiling(bandwidth) + 1L
     kin <- seq(-1, 1, length.out=win.len)
   }
-  
+
   if (kernel.type %in% c('normal', 'gaussian')) {
     kout <- dnorm(kin, mu, sd)
     if (is.numeric(args$deriv) && args$deriv > 0) {
@@ -53,6 +54,7 @@ generateKernel <- function(kernel.type='normal', bandwidth=1L, normalize=TRUE, .
       derivs <- matrix(1, nrow=4, ncol=length(kin))
       derivs[1,] <- -(kin / (sd^2))
       derivs[2,] <- (kin^2 - (sd^2)) / sd^4
+      ## derivs[2,] <- kin^2/sd^4 - sd^2
       derivs[3,] <- -(kin^3 - 3*sd^2*kin) / sd^6
       derivs[4,] <- (kin^4 - 6*sd^2*kin^2 + 3*sd^4) / sd^8
       kout <- kout * derivs[deriv,]
@@ -106,7 +108,7 @@ g1 <- function(mu=0, sd=1, bandwidth=5) {
   if (missing(bandwidth)) {
     bandwidth <- ceiling(3 * sd)
   }
-  win.len <- ceiling(2L * bandwidth + 1L) 
+  win.len <- ceiling(2L * bandwidth + 1L)
   center <- ceiling(win.len / 2)
   x <- seq(win.len) - (center + mu)
   (-x / (sd^3 * sqrt(2*pi))) * exp(-1 * (x^2 / (2 * sd^2)))
@@ -116,7 +118,7 @@ g <- function(mu=0, sd=1, bandwidth=5) {
   if (missing(bandwidth)) {
     bandwidth <- ceiling(3 * sd)
   }
-  win.len <- ceiling(2L * bandwidth + 1L) 
+  win.len <- ceiling(2L * bandwidth + 1L)
   center <- ceiling(win.len / 2)
   x <- seq(win.len) - (center + mu)
   (1 / (sqrt(2*pi) * sd)) * exp(-(x^2/(2*sd^2)))

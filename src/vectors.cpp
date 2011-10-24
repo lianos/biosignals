@@ -23,17 +23,17 @@ zero_crossings(std::vector<T> &x, int start, int end) {
 
 template <typename T>
 void
-update_window_stats(std::vector<T> &x, int &back, int &front, int &current, 
+update_window_stats(std::vector<T> &x, int &back, int &front, int &current,
                     T &val, int win_length, int i, bool min);
 
 /**
  * Helper function to keep the value of the local min/max in current window
- * 
+ *
  * Also slides window along vector so that the max/min is always correct for
  * a window that is (i - win_length:i + win_length:i)
  */
 template <typename T>
-void 
+void
 update_window_stats(std::vector<T> &x, int &back, int &front, int &current,
                     T &val, int win_length, int i, bool is_min) {
     int j;
@@ -46,7 +46,7 @@ update_window_stats(std::vector<T> &x, int &back, int &front, int &current,
         front++;
     }
     front--;
-        
+
     // remove elements from the tail
     while ((i - back > win_length) && (back <= x.size() - win_length)) {
         back++;
@@ -58,11 +58,11 @@ update_window_stats(std::vector<T> &x, int &back, int &front, int &current,
             val = x[current];
             for (j = back + 1; j <= front; j++) {
                 if ((is_min && x[j] < val) || (!is_min && x[j] > val)) {
-                    current = front;
+                    current = j;
                     val = x[current];
                 }
             }
-            
+
         } // previous min/max fell outside of window
     } // removing elements from tail
 }
