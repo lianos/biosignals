@@ -1,4 +1,10 @@
 useDynLib(biosignals)
+import(IRanges)
+
+exportMethods(
+  detectPeaksByEdges,
+  convolve1d
+)
 
 export(
   convolve1d,
@@ -7,13 +13,19 @@ export(
   analyzeEdges,
   findLocalExterma,
 
+  detectEdges,
+  detectPeaksByEdges,
+
   kdeSmooth,
   generateKernel,
 
   slidingMax,
   slidingMin,
   zeroCrossings,
-  quantilePositions
+  quantilePositions,
+
+  ## To help debug
+  visualizeEdges
 )
 
 

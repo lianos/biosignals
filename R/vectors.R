@@ -11,7 +11,8 @@ zeroCrossings <- function(x) {
   .Call('Rzero_crossings', as.numeric(x), PACKAGE="biosignals")
 }
 
-quantilePositions <- function(signal, bounds, quantile.breaks=NULL) {
+quantilePositions <- function(signal, bounds=IRanges(1, length(signal)),
+                              quantile.breaks=NULL) {
   if (!inherits(signal, "Rle")) {
     ## TODO: Add slice,numeric to IRanges
     signal <- Rle(signal)

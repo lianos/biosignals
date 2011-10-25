@@ -16,7 +16,7 @@ local_turnpoints(std::vector<T> &x, double threshold, int K) {
     std::vector<int> mins;
     std::vector<int> maxs;
     std::pair< std::vector<int>, std::vector<int> > result;
-    
+
     if (x.size() == 0) {
         return std::make_pair(mins, maxs);
     }
@@ -37,15 +37,15 @@ local_turnpoints(std::vector<T> &x, double threshold, int K) {
         if (cval_min / cmax >= threshold)
         // look for maxima
         update_window_stats(x, bidx_min, fidx_min, cidx_min, cmin, K, i, false);
-        
-        
+
+
         cval_max = x[i];
         if (SIGN(cval_max) != SIGN(cmax)) {
             cval_max = -1 * cval_max;
         }
-        
+
     }
-    
+
     result = std::make_pair(mins, maxs);
     return result;
 }
@@ -56,10 +56,12 @@ local_turnpoints(std::vector<T> &x, double threshold, int K) {
 
 SEXP
 Rlocal_turnpoints(SEXP x_, SEXP threshold_, SEXP wlength_) {
+BEGIN_RCPP
     std::vector<double> x = Rcpp::as<std::vector<double> >(x_);
     double threshold = Rcpp::as<double>(threshold_);
     int wlength = Rcpp::as<int>(wlength_);
-    
+
     return R_NilValue;
+END_RCPP
 }
 

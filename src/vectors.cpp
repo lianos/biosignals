@@ -172,29 +172,36 @@ coverage_quantiles(std::vector<T> &x, std::vector<int> starts,
 
 SEXP
 Rzero_crossings(SEXP x_) {
+BEGIN_RCPP
     std::vector<double> x = Rcpp::as< std::vector<double> >(x_);
     std::vector<int> z = zero_crossings(x);
     // convert to R coords
     for (int i = 0; i < z.size(); i++) z[i]++;
     return Rcpp::wrap(z);
+END_RCPP
 }
 
 SEXP
 Rsliding_max(SEXP x_, SEXP k_) {
+BEGIN_RCPP
     std::vector<double> x = Rcpp::as<std::vector<double> >(x_);
     int k = Rcpp::as<int>(k_);
     return Rcpp::wrap(sliding_window_maximum(x, k));
+END_RCPP
 }
 
 SEXP
 Rsliding_min(SEXP x_, SEXP k_) {
+BEGIN_RCPP
     std::vector<double> x = Rcpp::as<std::vector<double> >(x_);
     int k = Rcpp::as<int>(k_);
     return Rcpp::wrap(sliding_window_minimum(x, k));
+END_RCPP
 }
 
 SEXP
 Rcoverage_quantiles(SEXP x_, SEXP starts_, SEXP ends_, SEXP breaks_) {
+BEGIN_RCPP
     std::vector<double> x = Rcpp::as< std::vector<double> >(x_);
     std::vector<int> starts = Rcpp::as< std::vector<int> >(starts_);
     std::vector<int> ends = Rcpp::as< std::vector<int> >(ends_);
@@ -217,4 +224,5 @@ Rcoverage_quantiles(SEXP x_, SEXP starts_, SEXP ends_, SEXP breaks_) {
     }
 
     return Rcpp::wrap(out);
+END_RCPP
 }
