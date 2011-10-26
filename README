@@ -2,9 +2,10 @@ An R package to play with "signal" vectors.
 
 Smooth, find peaks and edges in signals.
 
-This code for edge detection is adapted from the MATLAB edge_detector_1d
-written by the CISMM group at UNC:
+Different sources of inspiration were used for performing edge detection
+including:
 
-http://cismm.cs.unc.edu/resources/tutorials/edge-detector-1d-tutorial/
+  http://nar.oxfordjournals.org/content/38/15/e157.full
+  http://cismm.cs.unc.edu/resources/tutorials/edge-detector-1d-tutorial/
 
 This package is neither endorsed or supported by CISMM.
