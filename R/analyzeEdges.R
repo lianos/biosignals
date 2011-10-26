@@ -146,7 +146,8 @@ visualizeEdges <- function(x, mu=0, sd=1, bandwidth=10, threshold=0.15,
     nt <- unlist(strsplit(nt, ''))
     cols <- acgt[nt]
 
-    rect(1:length(x) - .45, nt.y[1], 1:length(x) + .45, nt.y[2], border=NA, col=cols)
+    rect(1:length(x) - .45, nt.y[1], 1:length(x) + .45, nt.y[2],
+         border=NA, col=cols)
   }
 
   invisible(edges)
@@ -158,6 +159,7 @@ if (FALSE) {
   library(GenomicRanges)
   library(BSgenome.Hsapiens.UCSC.hg19)
   cvr <- readRDS("/Users/stavros/cBio/projects/biosignals/biosignals-pkg/inst/extdata/coverage.rda")
+  bchr <- unmasked(Hsapiens$chr21)
   ## cvr <- load.it('')
   ## islands <- slice(x, lower=1, rangesOnly=TRUE)
 
@@ -186,9 +188,10 @@ if (FALSE) {
     de <- visualizeEdges(cvr[istart:iend], bandwidth=40,
                          nt=bchr[(istart):(iend)])
   }
+
   ##############################################################################
-  ## As a functio now
-  e <- detectPeaksByEdges(cvr, bandwidth=40, min.height=10)
+  ## As a function now
+  e <- detectPeaksByEdges(cvr, bandwidth=40, min.height=10, min.width=21)
   edges <- cbind(data.frame(start=start(e), end=end(e)),
                  as.data.frame(values(e)))
   edges$width <- edges$end - edges$start

@@ -14,7 +14,7 @@ convolve_1d(std::vector<double> *x, std::vector<double> *kernel, bool rescale) {
     double val;
 
     std::vector<double> *result = new std::vector<double>(N, 0.0);
-    max_x = (*x)[0];
+    max_x = abs((*x)[0]);
     max_result = -1 * std::numeric_limits<double>::max();
 
     // Dodge head edge effects
@@ -27,14 +27,14 @@ convolve_1d(std::vector<double> *x, std::vector<double> *kernel, bool rescale) {
 
     // Main convolution
     for (i = klen; i < x->size() + klen; i++) {
-        if ((*x)[i - klen] > max_x) {
-            max_x = (*x)[i - klen];
+        if (abs((*x)[i - klen]) > max_x) {
+            max_x = abs((*x)[i - klen]);
         }
         for (j = 0; j < klen; j++) {
             val = (*result)[i+j] + (*x)[i - klen] * (*kernel)[j];
             (*result)[i+j] = val;
-            if (val > max_result) {
-                max_result = val;
+            if (abs(val) > max_result) {
+                max_result = abs(val);
             }
         }
     }

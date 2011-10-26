@@ -11,8 +11,15 @@ function(x, bandwidth=40, mu=0, sd=1, threshold=0.15, edge.window=2*bandwidth,
 
 ##' Returns NULL if there was an error
 setMethod("detectPeaksByEdges", c(x="numeric"),
-function(x, bandwidth, mu, sd, threshold, edge.window, do.clean,
+function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
          bandwidths, .strand='+', min.height=10, ...) {
+  if (min.height > 0) {
+    peaks <- detectPeaksByEdges(Rle(x), bandwidth, mu, sd, threshold,
+                                edge.window, min.width, do.clean, bandwidths,
+                                .strand=.strand, min.height=min.height, ...)
+    return(peaks)
+  }
+
   edges <- detectEdges(x, bandwidth=bandwidth, mu=mu, sd=sd,
                        threshold=threshold, edge.window=edge.window, ...)
 
@@ -29,6 +36,9 @@ function(x, bandwidth, mu, sd, threshold, edge.window, do.clean,
 
   ir <- IRanges(edges$start, edges$end)
   values(ir) <- DataFrame(fishy=rep(looks.fishy, length(ir)))
+  if (min.width > 0) {
+    ir <- ir[width(ir) > min.width]
+  }
   ir
 })
 
@@ -48,24 +58,32 @@ function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
     ix <- as.numeric(cvr[(istart-pad.by):(iend+pad.by)])
 
     e <- f(ix, bandwidth, mu, sd, threshold, edge.window, do.clean=do.clean,
-           bandwidths=bandwidths, .strand=.strand, ...)
+           bandwidths=bandwidths, .strand=.strand, min.height=0, ...)
 
     if (is.null(e)) {
       nbad <<- nbad + 1L
       return(NULL)
     }
+    if (length(e) == 0) {
+      return(NULL)
+    }
 
     values(e)$multi.modal <- length(e) > 1
-    start(e) <- pmax(1L, start(e) - pad.by)
-    end(e) <- pmin(length(ix) - pad.by, end(e) - pad.by)
+    starts <- pmax(1L, start(e) - pad.by)
+    start(e) <- starts
+
+    ends <- pmin(length(ix) - pad.by, end(e) - pad.by)
+    ends <- pmax(ends, starts + 1) ## edge was found in front padding!
+    end(e) <- ends
     shift(e, istart)
   })
 
   if (nbad > 0) {
-    message("couldn't locate peaks in", nbad, "islands\n")
+    message("couldn't locate peaks in ", nbad, " islands\n")
   }
 
-  edges <- do.call(c, unname(edges[!is.bad]))
+  edges <- do.call(c, unname(edges))
+  edges <- edges[width(edges) >= min.width]
   edges
 })
 

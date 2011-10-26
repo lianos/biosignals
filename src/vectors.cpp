@@ -130,11 +130,8 @@ coverage_quantiles(std::vector<T> &x, std::vector<int> starts,
         iwidth = iend - istart + 1;
         total = 0;
 
-        // calculate total for current region
         for (j = 0; j < iwidth; j++) {
-            value = x[istart + j];
-            total += value;
-            tmpvals.push_back(value);
+            total += x[istart + j];
         }
 
         current_break = percentiles[0];
@@ -143,7 +140,8 @@ coverage_quantiles(std::vector<T> &x, std::vector<int> starts,
         cumsum = 0;
 
         while ((j < iwidth) && (nfound < np)) {
-            cumsum += tmpvals[j];
+            // cumsum += tmpvals[j];
+            cumsum += x[istart + j];
             if (current_break < (cumsum / total)) {
                 output[i][nfound] = j;
                 if (++nfound < np) {
@@ -153,13 +151,9 @@ coverage_quantiles(std::vector<T> &x, std::vector<int> starts,
             j++;
         }
 
-        if (output[i].size() < np) {
-            if (output[i].size() == 0) {
-                tmp = 0;
-            } else {
-                tmp = output[i][output[i].size() - 1];
-            }
-            for (j = output[i].size(); j < np; j++) {
+        if (nfound < np) {
+            tmp = (nfound == 0) ? 0 : output[i][nfound - 1];
+            for (j = nfound; j < np; j++) {
                 output[i][j] = tmp;
             }
         }

@@ -9,10 +9,6 @@ exportMethods(
 export(
   convolve1d,
 
-  createGaussScaleSpace,
-  analyzeEdges,
-  findLocalExterma,
-
   detectEdges,
   detectPeaksByEdges,
 
