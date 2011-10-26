@@ -140,7 +140,6 @@ coverage_quantiles(std::vector<T> &x, std::vector<int> starts,
         cumsum = 0;
 
         while ((j < iwidth) && (nfound < np)) {
-            // cumsum += tmpvals[j];
             cumsum += x[istart + j];
             if (current_break < (cumsum / total)) {
                 output[i][nfound] = j;

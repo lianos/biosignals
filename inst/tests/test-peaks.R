@@ -15,4 +15,20 @@ test_that("double starts (ends) are refined reasonably in a local peak", {
             5,    3,    2,    2,    1,    1,    1,    1,    1)
   de <- detectPeaksByEdges(x, bandwidth=36, bandwidths=c(28, 21))
   expect_is(de, 'IRanges')
+  expect_equal(length(de), 1)
+})
+
+test_that("signals do not cause IRanges with negative widths", {
+  x <- c(18, 21, 20, 20, 19, 12, 13, 13,  9,  9, 10, 10, 10,
+         10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11,
+         11, 11, 11, 11, 11, 11, 11, 12, 12, 12, 54, 52, 62,
+         62, 63, 63, 63, 62, 62, 62, 62, 61, 61, 61, 61,
+         61, 61, 61, 61, 61, 61, 61, 60, 60, 60, 60, 60, 60,
+         60, 60, 60, 60, 60, 59, 59, 59, 15, 14,  1,  1,
+         0 , 0 , 0 , 0 , 0 , 0 , 0 , 0)
+  de <- detectPeaksByEdges(x, bandwidth=36, bandwidths=c(28, 21),
+                           ignore.from.start=10, ignore.from.end=10)
+  expect_is(de, 'IRanges')
+  expect_equal(length(de), 1)
+  expect_true(width(de)[1] > 35 && width(de)[1] < 42)
 })
