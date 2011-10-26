@@ -5,14 +5,20 @@ function(x, bandwidth=40, mu=0, sd=1, threshold=0.15, edge.window=2*bandwidth,
   standardGeneric("detectPeaksByEdges")
 })
 
-.is.fishy.edge.detection <- function(starts, ends) {
+.start.end.inorder <- function(starts, ends) {
+  is.start <- c(rep(TRUE, length(starts)), rep(FALSE, length(ends)))
+  check <- is.start[order(c(starts, ends))]
+  all(rle(check)$lengths == 1)
+}
+
+.bad.edge.detection <- function(starts, ends) {
   length(starts) == 0L || length(starts) != length(ends)
 }
 
 ##' Returns NULL if there was an error
 setMethod("detectPeaksByEdges", c(x="numeric"),
 function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
-         bandwidths, .strand='+', min.height=10, ...) {
+         bandwidths, .strand='+', min.height=0, ...) {
   if (min.height > 0) {
     peaks <- detectPeaksByEdges(Rle(x), bandwidth, mu, sd, threshold,
                                 edge.window, min.width, do.clean, bandwidths,
@@ -23,19 +29,21 @@ function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
   edges <- detectEdges(x, bandwidth=bandwidth, mu=mu, sd=sd,
                        threshold=threshold, edge.window=edge.window, ...)
 
-  looks.fishy <- .is.fishy.edge.detection(edges$start, edges$end)
+  fishy <- .bad.edge.detection(edges$start, edges$end) ||
+    !.start.end.inorder(edges$start, edges$end)
 
-  if (do.clean && looks.fishy) {
+  if (do.clean && fishy) {
     edges <- refineEdges(x, bandwidth, edges$start, edges$end,
                          bandwidths=bandwidths, .strand=.strand, ...)
   }
 
-  if (.is.fishy.edge.detection(edges$start, edges$end)) {
+  if (.bad.edge.detection(edges$start, edges$end) ||
+      !.start.end.inorder(edges$start, edges$end)) {
     return(NULL)
   }
 
   ir <- IRanges(edges$start, edges$end)
-  values(ir) <- DataFrame(fishy=rep(looks.fishy, length(ir)))
+  values(ir) <- DataFrame(fishy=rep(fishy, length(ir)))
   if (min.width > 0) {
     ir <- ir[width(ir) > min.width]
   }
@@ -55,7 +63,9 @@ function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
   edges <- lapply(1:length(islands), function(i) {
     istart <- start(islands[i])
     iend <- end(islands[i])
-    ix <- as.numeric(cvr[(istart-pad.by):(iend+pad.by)])
+    istart.pad <- max((istart-pad.by), 1L)
+    iend.pad <- min(iend+pad.by, length(x))
+    ix <- as.numeric(x[istart.pad:iend.pad])
 
     e <- f(ix, bandwidth, mu, sd, threshold, edge.window, do.clean=do.clean,
            bandwidths=bandwidths, .strand=.strand, min.height=0, ...)
@@ -69,10 +79,10 @@ function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
     }
 
     values(e)$multi.modal <- length(e) > 1
-    starts <- pmax(1L, start(e) - pad.by)
+    starts <- pmax(1L, start(e) - istart - istart.pad)
     start(e) <- starts
 
-    ends <- pmin(length(ix) - pad.by, end(e) - pad.by)
+    ends <- pmin(length(ix) - (iend.pad - iend), end(e) - pad.by)
     ends <- pmax(ends, starts + 1) ## edge was found in front padding!
     end(e) <- ends
     shift(e, istart)
@@ -83,13 +93,18 @@ function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
   }
 
   edges <- do.call(c, unname(edges))
-  edges <- edges[width(edges) >= min.width]
+  if (!is.null(edges) && length(edges) > 0) {
+    edges <- edges[width(edges) >= min.width]
+  }
   edges
 })
 
 refineEdges <- function(x, bandwidth, starts, ends,
                         bandwidths=ceiling(c(.8, .5) * bandwidth), .strand='+',
-                        max.iter=10, ...) {
+                        max.iter=10, detangle.by=c('max', 'min'), ...) {
+  bandwidths <- sort(bandwidths, decreasing=TRUE)
+  detangle.by <- match.arg(detangle.by)
+
   ## If there are no fenceposts, try to shrink bandwith
   while ((length(starts) == 0 || length(ends) == 0) && length(bandwidths)) {
     bandwidth <- ceiling(bandwidths[1])
@@ -99,7 +114,6 @@ refineEdges <- function(x, bandwidth, starts, ends,
     starts <- de$start
     bandwidths <- bandwidths[-1]
   }
-
 
   if (length(starts) == 0 || length(ends) == 0) {
     obs.quantiles <- quantilePositions(x, IRanges(1, length(x)))
@@ -114,30 +128,57 @@ refineEdges <- function(x, bandwidth, starts, ends,
     ends <- obs.quantiles[[ncol(obs.quantiles)]][[1L]]
   }
 
-  all.bounds <- c(starts, ends)
-  o <- order(all.bounds, decreasing=.strand == '+')
-  df <- data.frame(pos=all.bounds,
-                   start=c(rep(TRUE, length(starts)), rep(FALSE, length(ends))))
-  df <- df[o,]
-  r <- rle(df$start)
-  i <- 1
+  ## Are the starts and ends order out of whack?
 
-  while(length(axe <- which(r$lengths > 1)) && i <= max.iter) {
-    df <- df[-sum(r$lengths[1:axe]),]
-    r <- rle(df$start)
-    i <- i + 1
+  if (!.start.end.inorder(starts, ends)) {
+    if (detangle.by == 'max') {
+      starts <- min(starts)
+      ends <- max(ends)
+    } else {
+      starts <- max(starts)
+      ends <- min(ends)
+    }
   }
 
+  return(list(start=starts, end=ends))
+  ## TODO: We are currently assuming the edge calling in local "lisands"
+  ##       so if the start,edge order looks wonky, we just take min/max
+  ##       Make this a smarter "refining" of mixed start/edge pairs!
+  ##       Make take the steeper of the two edges (or something)
+  ## df <- data.frame(pos=all.bounds,
+  ##                  start=c(rep(TRUE, length(starts)), rep(FALSE, length(ends))))
+  ## df <- df[order(df$pos, decreasing=.strand == '+'), ]
+  ## r <- rle(df$start)
+  ## i <- 1
+  ## axe <- which(r$lengths > 1)
 
-  if (.strand == '+') {
-    df <- df[rev(seq(nrow(df))),]
-  }
+  ## ## If there are two starts in a row, only keep the first one
+  ## ## If there are two ends in a row, only keep the first one also!
+  ## while(length(axe) > 0 && i <= max.iter) {
+  ##   if (r[axe]) {
+  ##     ## This is the start of a peak
 
-  ret <- list(start=df$pos[df$start], end=df$pos[!df$start])
-  if (length(ret$end) == 0 || length(ret$start) == 0) {
-    stop("0-length edges should not have happend w/ the quantile trick!")
-  }
+  ##   } else {
+  ##     ## This is the end of a peak
+  ##   }
+  ##   rm.idx <- max(1, axe[1L] - 1)
+  ##   df <- df[-sum(r$lengths[1:rm.idx]),]
+  ##   r <- rle(df$start)
+  ##   i <- i + 1
+  ##   r <- rle(df$start)
+  ##   axe <- which(r$lengths > 1)
+  ## }
 
-  ret
+
+  ## if (.strand == '+') {
+  ##   df <- df[rev(seq(nrow(df))),]
+  ## }
+
+  ## ret <- list(start=df$pos[df$start], end=df$pos[!df$start])
+  ## if (length(ret$end) == 0 || length(ret$start) == 0) {
+  ##   stop("0-length edges should not have happend w/ the quantile trick!")
+  ## }
+
+  ## ret
 }
 

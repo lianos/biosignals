@@ -101,7 +101,8 @@ detectEdges <- function(x, bandwidth=10, mu=0, sd=1, threshold=0.15,
 ## peaks end when second deriv goes from - to +
 visualizeEdges <- function(x, mu=0, sd=1, bandwidth=10, threshold=0.15,
                            edge.window=2*bandwidth, nt=NULL,
-                           nt.y=0.03 * par('usr')[3:4], .strand='+') {
+                           nt.y=0.03 * par('usr')[3:4], .strand='+',
+                           ...) {
   if (missing(x)) {
     ## this is a test
     x <- c(rep(0, 15), rep(20, 15), -1, rep(0, 20))
@@ -131,7 +132,8 @@ visualizeEdges <- function(x, mu=0, sd=1, bandwidth=10, threshold=0.15,
          text.col=c('red', 'green'))
 
   edges <- detectPeaksByEdges(x, bandwidth=bandwidth, mu=mu, sd=sd,
-                              threshold=threshold, .strand=.strand)
+                              threshold=threshold, .strand=.strand,
+                              ...)
   abline(v=start(edges), col='green', lty='dashed', lwd=2)
   abline(v=end(edges), col='red', lty='dashed', lwd=2)
 
