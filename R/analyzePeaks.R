@@ -12,13 +12,15 @@ function(x, bandwidth=40, mu=0, sd=1, threshold=0.15, edge.window=2*bandwidth,
 }
 
 .bad.edge.detection <- function(starts, ends) {
-  length(starts) == 0L || length(starts) != length(ends)
+  length(starts) == 0L || length(starts) != length(ends) ||
+  min(ends) <= min(starts) || max(starts) >= max(ends)
 }
 
 ##' Returns NULL if there was an error
 setMethod("detectPeaksByEdges", c(x="numeric"),
 function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
-         bandwidths, .strand='+', min.height=0, ...) {
+         bandwidths, .strand='+', min.height=0,
+         ignore.from.start=NULL, ignore.from.end=NULL, ...) {
   if (min.height > 0) {
     peaks <- detectPeaksByEdges(Rle(x), bandwidth, mu, sd, threshold,
                                 edge.window, min.width, do.clean, bandwidths,
@@ -28,6 +30,35 @@ function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
 
   edges <- detectEdges(x, bandwidth=bandwidth, mu=mu, sd=sd,
                        threshold=threshold, edge.window=edge.window, ...)
+
+  if (is.numeric(ignore.from.start)) {
+    if (length(edges$start) > 0) {
+      edges$start <- edges$start[edges$start >= ignore.from.start]
+    }
+    if (length(edges$end) > 0) {
+      edges$end <- edges$end[edges$end >= ignore.from.start]
+    }
+  }
+
+  if (is.numeric(ignore.from.end)) {
+    if (length(edges$start) > 0) {
+      edges$start <- edges$start[edges$start <= length(x) - ignore.from.end]
+    }
+    if (length(edges$end) > 0) {
+      edges$end <- edges$end[edges$end <= length(x) - ignore.from.end]
+    }
+  }
+
+  if (length(edges$start) > 0 && length(edges$end) > 0) {
+    bad.start <- edges$start >= max(edges$end)
+    if (any(bad.start)) {
+      edges$start <- edges$start[!bad.start]
+    }
+    bad.end <- edges$end <= min(edges$start)
+    if (any(bad.end)) {
+      edges$end <- edges$end[!bad.end]
+    }
+  }
 
   fishy <- .bad.edge.detection(edges$start, edges$end) ||
     !.start.end.inorder(edges$start, edges$end)
@@ -68,7 +99,9 @@ function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
     ix <- as.numeric(x[istart.pad:iend.pad])
 
     e <- f(ix, bandwidth, mu, sd, threshold, edge.window, do.clean=do.clean,
-           bandwidths=bandwidths, .strand=.strand, min.height=0, ...)
+           bandwidths=bandwidths, .strand=.strand, min.height=0,
+           ignore.from.start=istart - istart.pad,
+           ignore.from.end=iend.pad - iend, ...)
 
     if (is.null(e)) {
       nbad <<- nbad + 1L
@@ -79,11 +112,11 @@ function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
     }
 
     values(e)$multi.modal <- length(e) > 1
-    starts <- pmax(1L, start(e) - istart - istart.pad)
+    starts <- pmax(1L, start(e) - (istart - istart.pad))
     start(e) <- starts
 
     ends <- pmin(length(ix) - (iend.pad - iend), end(e) - pad.by)
-    ends <- pmax(ends, starts + 1) ## edge was found in front padding!
+    ## ends <- pmax(ends, starts + 1) ## edge was found in front padding!
     end(e) <- ends
     shift(e, istart)
   })
