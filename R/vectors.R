@@ -1,3 +1,15 @@
+asRle <- function(x, eps=1e-6) {
+  stopifnot(is.numeric(x))
+  ret <- .Call("Ras_rle", x, eps, PACKAGE="biosignals")
+  Rle(ret$values, ret$lengths)
+}
+
+expandRle <- function(x) {
+  stopifnot(is(x, "Rle"))
+  stopifnot(is.numeric(as.vector(x[1])))
+  .Call("Rexpand_rle", runLength(x), runValue(x), PACKAGE="biosignals")
+}
+
 slidingMax <- function(x, k=5L) {
   ret <- .Call('Rsliding_max', as.numeric(x), as.integer(k),
                PACKAGE="biosignals")
@@ -40,3 +52,4 @@ quantilePositions <- function(signal, bounds=IRanges(1, length(signal)),
   colnames(quants) <- paste('quantile', gsub("0\\.", "", quantile.breaks), sep=".")
   as.data.frame(quants)
 }
+

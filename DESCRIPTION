@@ -13,7 +13,7 @@ License: GPL (>= 3)
 Depends: R (>= 2.13.0), Rcpp (>= 0.9.7)
 Imports: Rcpp, methods, IRanges
 Suggests: testthat (>= 0.5)
-LinkingTo: Rcpp
+LinkingTo: Rcpp,IRanges
 URL: http://lianos.github.com/biosignals/,
      http://cismm.cs.unc.edu/resources/tutorials/edge-detector-1d-tutorial/
 Repository: CRAN

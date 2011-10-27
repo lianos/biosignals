@@ -1,5 +1,77 @@
 #include "vectors.h"
 
+// template<typename T>
+// std::pair< std::vector<int>, std::vector<T> >
+std::pair< std::vector<int>, std::vector<double> >
+as_rle(std::vector<double> &vals, double eps) {
+    // std::vector<T> values;
+    std::vector<double> values;
+    std::vector<int> lengths;
+    std::pair< std::vector<int>, std::vector<double> > out;
+    
+    // T current_val, tmp_val;
+    double current_val, tmp_val;
+    int current_len;
+    
+    if (vals.size() == 0) {
+        out.first = lengths;
+        out.second = values;
+        return out;
+    }
+    
+    current_val = vals[0];
+    current_len = 1;
+    
+    for (int i = 1; i < vals.size(); i++) {
+        tmp_val = vals[i];
+        if (ALMOST_ZERO_EPS(tmp_val - current_val, eps)) {
+            current_len++;
+        } else {
+            lengths.push_back(current_len);
+            values.push_back(current_val);
+            current_len = 1;
+            current_val = tmp_val;
+        }
+    }
+    
+    if (values.back() != current_val) {
+        values.push_back(current_val);
+        lengths.push_back(current_len);
+    }
+    
+    out.first = lengths;
+    out.second = values;
+    return out;
+}
+
+// template<typename T>
+// std::vector<T>
+std::vector<double>
+expand_rle(std::vector<int> lengths, std::vector<double> &vals) {
+    int length = 0;
+    int i,j,len,sofar;
+    // T val;
+    double val;
+    
+    for (i = 0; i < lengths.size(); i++) {
+        length += lengths[i];
+    }
+    
+    // std::vector<T> out = std::vector<T>(length);
+    std::vector<double> out = std::vector<double>(length);
+    sofar = 0;
+    for (i = 0; i < lengths.size(); i++) {
+        val = vals[i];
+        len = lengths[i];
+        for (j = 0; j < len; j++) {
+            out[sofar++] = val;
+        }
+    }
+    
+    return out;
+}
+
+
 template <typename T>
 std::vector<int>
 zero_crossings(std::vector<T> &x, int start, int end) {
@@ -165,6 +237,53 @@ coverage_quantiles(std::vector<T> &x, std::vector<int> starts,
 }
 
 // ----------------------------------------------------------------- Rinterface
+SEXP
+Ras_rle(SEXP vals_, SEXP eps_) {
+BEGIN_RCPP    
+    // switch(TYPEOF(x)) {
+    // case LGLSXP:
+    //     PROTECT(ans = Rle_logical_constructor(x, counts));
+    //     break;
+    // case INTSXP:
+    //     PROTECT(ans = Rle_integer_constructor(x, counts));
+    //     break;
+    // case REALSXP:
+    //     PROTECT(ans = Rle_real_constructor(x, counts));
+    //     break;
+    // case CPLXSXP:
+    //     PROTECT(ans = Rle_complex_constructor(x, counts));
+    //     break;
+    // case STRSXP:
+    //     PROTECT(ans = Rle_string_constructor(x, counts));
+    //     break;
+    // case RAWSXP:
+    //     PROTECT(ans = Rle_raw_constructor(x, counts));
+    //     break;
+    // default:
+    //     error("Rle computation of these types is not implemented");
+    // }
+    SEXP ret;
+    double eps = Rcpp::as<double>(eps_);
+    std::vector<double> vals = Rcpp::as< std::vector<double> >(vals_);
+    std::pair< std::vector<int>, std::vector<double> > out;
+    out = as_rle(vals, eps);
+
+    ret = Rcpp::List::create(Rcpp::Named("lengths", Rcpp::wrap(out.first)),
+                             Rcpp::Named("values", Rcpp::wrap(out.second)));
+    return ret;
+END_RCPP
+}
+
+SEXP
+Rexpand_rle(SEXP lengths_, SEXP vals_) {
+BEGIN_RCPP
+    std::vector<int> lengths = Rcpp::as< std::vector<int> >(lengths_);
+    std::vector<double> vals = Rcpp::as< std::vector<double> >(vals_);
+    std::vector<double> out = expand_rle(lengths, vals);
+    
+    return Rcpp::wrap(out);
+END_RCPP
+}
 
 SEXP
 Rzero_crossings(SEXP x_) {

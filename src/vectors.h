@@ -3,6 +3,21 @@
 
 #include "biosignals.h"
 
+// First element in pair is length, second is vals
+// template<typename T>
+// std::pair< std::vector<int>, std::vector<T> >
+// as_rle(std::vector<T> &vals, double eps=1e-6);
+
+// template<typename T>
+// std::vector<T>
+// expand_rle(std::vector<int> lengths, T &vals);
+
+std::pair< std::vector<int>, std::vector<double> >
+as_rle(std::vector<double> &vals, double eps=1e-6);
+
+std::vector<double>
+expand_rle(std::vector<int> lengths, std::vector<double> &vals);
+
 template <typename T>
 std::vector<int>
 zero_crossings(std::vector<T> &x, int start=0, int end=0);
@@ -33,6 +48,12 @@ Rzero_crossings(SEXP x_);
 
 RcppExport SEXP
 Rcoverage_quantiles(SEXP x_, SEXP starts_, SEXP ends_, SEXP breaks_);
+
+RcppExport SEXP
+Ras_rle(SEXP vals_, SEXP eps_);
+
+RcppExport SEXP
+Rexpand_rle(SEXP lengths_, SEXP vals_);
 
 #endif
 

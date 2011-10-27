@@ -43,16 +43,32 @@ function(x, kernel='normal', rescale=TRUE, bandwidth=20,
 })
 
 setMethod("convolve1d", c(x="Rle"),
-function(x, kernel='normal', rescale=TRUE, bandwidth=20, lower=0,
-         ...) {
+function(x, kernel='normal', rescale=TRUE, bandwidth=20, lower=0, ...) {
   islands <- slice(x, lower=lower, includeLower=lower != 0, rangesOnly=TRUE)
+  if (is.character(kernel)) {
+    kernel <- generateKernel(kernel, bandwidth=bandiwdth, ...)
+  }
+  stopifnot(is.numeric(kernel))
   if (length(islands) == 0) {
     ret <- Rle(values=0, lengths=length(x))
   } else {
-    ret <- convolve1d(as.numeric(x), kernel, rescale=rescale,
-                      bandwidth=bandwidth, starts=start(islands),
-                      ends=end(islands), ...)
+    ret <- .Call("Rconvolve_rle", x, kernel, start(islands), width(islands),
+                 rescale=rescale)
     ret <- Rle(ret)
   }
   ret
 })
+
+## setMethod("convolve1d", c(x="Rle"),
+## function(x, kernel='normal', rescale=TRUE, bandwidth=20, lower=0, ...) {
+##   islands <- slice(x, lower=lower, includeLower=lower != 0, rangesOnly=TRUE)
+##   if (length(islands) == 0) {
+##     ret <- Rle(values=0, lengths=length(x))
+##   } else {
+##     ret <- convolve1d(as.numeric(x), kernel, rescale=rescale,
+##                       bandwidth=bandwidth, starts=start(islands),
+##                       ends=end(islands), ...)
+##     ret <- Rle(ret)
+##   }
+##   ret
+## })

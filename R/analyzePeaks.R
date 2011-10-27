@@ -100,11 +100,13 @@ setMethod("detectPeaksByEdges", c(x="Rle"),
 function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
          bandwidths, pad.by=1, min.height=0L, .strand='+',
          smooth.x=TRUE, ...) {
-  if (smooth.x) {
-    xs <- convolve1d(x, kernel='normal', bandwidth=bandwidth, mu=mu, sd=sd)
-  } else {
-    xs <- x
-  }
+  # if (smooth.x) {
+  #   xs <- convolve1d(x, kernel='normal', bandwidth=bandwidth, mu=mu, sd=sd)
+  # } else {
+  #   xs <- x
+  # }
+  
+  xs <- x
   
   f <- getMethod('detectPeaksByEdges', 'numeric')
   islands <- slice(xs, lower=min.height, rangesOnly=TRUE,
