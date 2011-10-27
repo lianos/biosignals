@@ -8,7 +8,10 @@ test_that("idealized step edge detected", {
   x <- x + rnorm(length(x)) ## with some noise
 
   edges <- detectEdges(x)
-  expect_equal(edges$start, 16)
-  expect_equal(edges$end, 31)
+  
+  ## Give some slack on what the start/end calls are given the randomness
+  ## in the noise added to x, the real start/end should be 16 and 31
+  expect_true(edges$start %in% c(15:17))
+  expect_true(edges$end %in% c(30:32))
 })
 

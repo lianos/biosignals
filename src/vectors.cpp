@@ -4,6 +4,8 @@ template <typename T>
 std::vector<int>
 zero_crossings(std::vector<T> &x, int start, int end) {
     std::vector<int> zeroes;
+    int push;
+
     if (end <= 0 || end >= x.size()) {
         end = x.size() - 1;
     }
@@ -15,7 +17,8 @@ zero_crossings(std::vector<T> &x, int start, int end) {
     }
     for (int i = start; i < end; i++) {
         if ((x[i] >= 0 && x[i+1] < 0) || (x[i] <= 0) && (x[i+1] > 0)) {
-            zeroes.push_back(i + 1);
+            push = (abs(x[i]) < abs(x[i + 1])) ? i : i + 1;
+            zeroes.push_back(push);
         }
     }
     return zeroes;

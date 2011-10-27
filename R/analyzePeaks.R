@@ -31,6 +31,7 @@ function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
   edges <- detectEdges(x, bandwidth=bandwidth, mu=mu, sd=sd,
                        threshold=threshold, edge.window=edge.window, ...)
 
+  ## Ensure that no edges are picked up within the "ignore.from.*" bounds.
   if (is.numeric(ignore.from.start)) {
     if (length(edges$start) > 0) {
       edges$start <- edges$start[edges$start >= ignore.from.start]
@@ -42,13 +43,15 @@ function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
 
   if (is.numeric(ignore.from.end)) {
     if (length(edges$start) > 0) {
-      edges$start <- edges$start[edges$start <= length(x) - ignore.from.end]
+      edges$start <- edges$start[edges$start <= length(x) - ignore.from.end + 1L]
     }
     if (length(edges$end) > 0) {
-      edges$end <- edges$end[edges$end <= length(x) - ignore.from.end]
+      edges$end <- edges$end[edges$end <= length(x) - ignore.from.end + 1L]
     }
   }
 
+  ## Look for and remove edges that start after the last end, or ones that end
+  ## before the first start
   if (length(edges$start) > 0 && length(edges$end) > 0) {
     bad.start <- edges$start >= max(edges$end)
     if (any(bad.start)) {
@@ -60,6 +63,7 @@ function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
     }
   }
 
+  ## If edges are out of order (insane for peaks), then try to clean it up
   fishy <- .bad.edge.detection(edges$start, edges$end) ||
     !.start.end.inorder(edges$start, edges$end)
 
@@ -73,6 +77,17 @@ function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
     return(NULL)
   }
 
+  ## Make edges start at non-zero positions
+  shift.starts <- x[edges$start] == 0 & x[edges$start + 1L] > 0L
+  if (any(shift.starts)) {
+    edges$start[shift.starts] <- edges$start[shift.starts] + 1L
+  }
+
+  shift.ends <- x[edges$end] == 0 & x[edges$end - 1L] > 0L
+  if (any(shift.ends)) {
+    edges$end[shift.ends] <- edges$end[shift.ends] - 1L
+  }
+
   ir <- IRanges(edges$start, edges$end)
   values(ir) <- DataFrame(fishy=rep(fishy, length(ir)))
   if (min.width > 0) {
@@ -83,19 +98,25 @@ function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
 
 setMethod("detectPeaksByEdges", c(x="Rle"),
 function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
-         bandwidths, pad.by=10, min.height=10L, .strand='+', ...) {
+         bandwidths, pad.by=1, min.height=0L, .strand='+',
+         smooth.x=TRUE, ...) {
+  if (smooth.x) {
+    xs <- convolve1d(x, kernel='normal', bandwidth=bandwidth, mu=mu, sd=sd)
+  } else {
+    xs <- x
+  }
+  
   f <- getMethod('detectPeaksByEdges', 'numeric')
-  islands <- slice(x, lower=min.height, rangesOnly=TRUE,
+  islands <- slice(xs, lower=min.height, rangesOnly=TRUE,
                    includeLower=min.height != 0)
   islands <- islands[width(islands) >= min.width]
-
   nbad <- 0L
-
+  
   edges <- lapply(1:length(islands), function(i) {
     istart <- start(islands[i])
     iend <- end(islands[i])
-    istart.pad <- max((istart-pad.by), 1L)
-    iend.pad <- min(iend+pad.by, length(x))
+    istart.pad <- max((istart - pad.by), 1L)
+    iend.pad <- min(iend + pad.by, length(x))
     ix <- as.numeric(x[istart.pad:iend.pad])
 
     e <- f(ix, bandwidth, mu, sd, threshold, edge.window, do.clean=do.clean,
@@ -103,6 +124,7 @@ function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
            ignore.from.start=istart - istart.pad,
            ignore.from.end=iend.pad - iend, ...)
 
+    ## Return a NULL on error/out-of-bounds conditions
     if (is.null(e)) {
       nbad <<- nbad + 1L
       return(NULL)
@@ -111,14 +133,11 @@ function(x, bandwidth, mu, sd, threshold, edge.window, min.width, do.clean,
       return(NULL)
     }
 
-    values(e)$multi.modal <- length(e) > 1
-    starts <- pmax(1L, start(e) - (istart - istart.pad))
-    start(e) <- starts
-
-    ends <- pmin(length(ix) - (iend.pad - iend), end(e) - pad.by)
-    ## ends <- pmax(ends, starts + 1) ## edge was found in front padding!
-    end(e) <- ends
-    shift(e, istart)
+    ## Shift the edge calls back as far as we padded ix from its start
+    ## and up into the correct region of x
+    e <- shift(e, istart.pad - istart + (istart - 1L))
+    values(e)$multi.modal <- rep(length(e) > 1, length(e))
+    e
   })
 
   if (nbad > 0) {
