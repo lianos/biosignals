@@ -43,31 +43,6 @@ as_rle(std::vector<double> &vals, double eps) {
     return out;
 }
 
-std::vector<double>
-expand_rle(std::vector<int> lengths, std::vector<double> &vals) {
-    int length = 0;
-    int i,j,len,sofar;
-    // T val;
-    double val;
-    
-    for (i = 0; i < lengths.size(); i++) {
-        length += lengths[i];
-    }
-    
-    // std::vector<T> out = std::vector<T>(length);
-    std::vector<double> out = std::vector<double>(length);
-    sofar = 0;
-    for (i = 0; i < lengths.size(); i++) {
-        val = vals[i];
-        len = lengths[i];
-        for (j = 0; j < len; j++) {
-            out[sofar++] = val;
-        }
-    }
-    
-    return out;
-}
-
 // ----------------------------------------------------------------- Rinterface
 
 SEXP
@@ -112,8 +87,8 @@ Rexpand_rle(SEXP lengths_, SEXP vals_) {
 BEGIN_RCPP
     std::vector<int> lengths = Rcpp::as< std::vector<int> >(lengths_);
     std::vector<double> vals = Rcpp::as< std::vector<double> >(vals_);
-    std::vector<double> out = expand_rle(lengths, vals);
-    
+    biosignals::Rle<double> rle = biosignals::Rle<double>(vals, lengths);
+    std::vector<double> out = rle.expand();
     return Rcpp::wrap(out);
 END_RCPP
 }
