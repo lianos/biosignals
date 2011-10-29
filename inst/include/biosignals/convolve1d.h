@@ -1,15 +1,21 @@
 #ifndef __BS_CONVOLVED1D_H__
 #define __BS_CONVOLVED1D_H__
 
-std::vector<double> *
-convolve_1d(const std::vector<double> &x,
-            const std::vector<double> &kernel, bool rescale);
+#include <vector>
+
+namespace biosignals {
 
 std::vector<double> *
-convolve_1d_inbounds(const std::vector<double> &x,
-                     const std::vector<double> &kernel,
-                     const std::vector<int> &starts,
-                     const std::vector<int> &ends, bool rescale,
-                     double init = 0.0);
+convolve_1d(std::vector<double> const& x,
+            std::vector<double> const& kernel,
+            bool rescale=true);
 
+std::vector<double> *
+convolve_1d_inbounds(std::vector<double> const& x,
+                     std::vector<double> const& kernel,
+                     std::vector<int> const& starts,
+                     std::vector<int> const& ends,
+                     bool rescale, double init=0.0);
+
+}
 #endif

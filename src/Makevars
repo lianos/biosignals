@@ -1,9 +1,27 @@
 PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"`
 PKG_CXXFLAGS += -I../inst/include
 
-.PHONY: all
+.PHONY: .depend clean
 
-all: $(SHLIB)
+all: .depend $(SHLIB)
+
+SRCFILES = $(shell find ../inst/include/biosignals -name "*.cpp")
+SRCFILES += $(shell find . -name "*.cpp")
+
+
+.depend:
+	@echo "===================================================================="
+	@echo "Compiling biosignals library"
+	@echo "===================================================================="
+	find ../inst/include/biosignals -name "*.cpp" -exec $(CXX) -MM $(DEFINES) $(PKG_CXXFLAGS) {} -MT {}.o \; >.depend
+	find . -name "*.cpp" -exec $(CXX) -MM $(DEFINES) $(PKG_CXXFLAGS) {} -MT {}.o \; >>.depend
+
+include .depend
+
+OBJECTS = $(patsubst %.cpp,%.cpp.o, $(SRCFILES))
+
+%.cpp.o: %.cpp
+	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) $(PKG_CXXFLAGS) $(DEFINES) -c $< -o $@
 
 clean:
 	rm -f *.o

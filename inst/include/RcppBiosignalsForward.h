@@ -3,16 +3,20 @@
 
 #include <RcppCommon.h>
 #include <Rconfig.h>
+
 #include "RcppBiosignalsConfig.h"
 
 // ----------------------------------------------------------------------------
 // include all? biosignals headers
-#include "biosignals/macros.h"
-
-#include "biosignals/vectors/utils.h"
+// #include "biosignals/common.h"
+// #include "biosignals/macros.h"
+//
+// #include "biosignals/convolve1d.h"
+//
+// 
+// #include "biosignals/vectors/utils.h"
 #include "biosignals/vectors/Rle.h"
 
-#include "biosignals/convolve1d.h"
 
 // ----------------------------------------------------------------------------
 

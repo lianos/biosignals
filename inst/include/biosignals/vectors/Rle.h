@@ -1,13 +1,14 @@
 #ifndef __BS__RLE_H__
 #define __BS__RLE_H__
 
-// #include "biosignals/common.h"
+#include <vector>
 #include "biosignals/macros.h"
 
 namespace biosignals {
 
 template <class T> class Rle {
 public:
+    
     Rle(std::vector<T> &vals, double eps=1e-6) {
         this->values = std::vector<T>();
         this->lengths = std::vector<int>();
@@ -90,10 +91,11 @@ public:
     //     return ans;
     // }
     
-// protected:
+//protected:
+
     std::vector<T> values;
     std::vector<int> lengths;
-}
+};
 
 }
 

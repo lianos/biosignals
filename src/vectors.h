@@ -3,41 +3,11 @@
 
 #include "RcppBiosignals.h"
 
-// #include "biosignals.h"
-// #include "biosignals/common.h"
-// #include "biosignals/vectors/Rle.h"
-
-// First element in pair is length, second is vals
-// template<typename T>
-// std::pair< std::vector<int>, std::vector<T> >
-// as_rle(std::vector<T> &vals, double eps=1e-6);
-
-// template<typename T>
-// std::vector<T>
-// expand_rle(std::vector<int> lengths, T &vals);
-
 std::pair< std::vector<int>, std::vector<double> >
 as_rle(std::vector<double> &vals, double eps=1e-6);
 
 std::vector<double>
 expand_rle(std::vector<int> lengths, std::vector<double> &vals);
-
-// template <typename T>
-// std::vector<int>
-// zero_crossings(std::vector<T> &x, int start=0, int end=0);
-// 
-// template <typename T>
-// std::vector<T>
-// sliding_window_minimum(std::vector<T> & ARR, int K);
-// 
-// template <typename T>
-// std::vector<T>
-// sliding_window_maximum(std::vector<T> & ARR, int K);
-// 
-// template <typename T>
-// std::vector< std::vector<int> >
-// coverage_quantiles(std::vector<T> &x, std::vector<int> starts,
-//                    std::vector<int> ends, std::vector<double> percentiles);
 
 // ----------------------------------------------------------------- Rinterface
 

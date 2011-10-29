@@ -1,6 +1,11 @@
+#if 0
+#include <vector>
 #include <cmath>
+
 #include "biosignals/vectors/utils.h"
 #include "biosignals/macros.h"
+
+namespace biosignals {
 
 template <typename T>
 std::vector<int>
@@ -8,7 +13,7 @@ zero_crossings(std::vector<T> &x, int start, int end) {
     std::vector<int> zeroes;
     int push;
 
-    if (end <= 0 || end >= x.size()) {
+    if (end < 0 || end >= x.size()) {
         end = x.size() - 1;
     }
     if (start >= end) {
@@ -113,7 +118,8 @@ sliding_window_maximum(std::vector<T> &x, int K) {
 template <typename T>
 std::vector< std::vector<int> >
 coverage_quantiles(std::vector<T> &x, std::vector<int> starts,
-                   std::vector<int> ends, std::vector<double> percentiles) {
+                   std::vector<int> ends,
+                   std::vector<double> percentiles) {
     int np = percentiles.size();
     int nranges = starts.size();
     int istart;
@@ -165,3 +171,6 @@ coverage_quantiles(std::vector<T> &x, std::vector<int> starts,
 
     return output;
 }
+
+}
+#endif

@@ -5,6 +5,9 @@
 ## 
 ## &> redirects error
 
+for o in `find inst/include/biosignals -name "*.o"`; do rm $o; done
+
+rm src/.depend &> /dev/null
 rm src/*.o &> /dev/null
 rm src/*.so &> /dev/null
 rm -rf src-* &> /dev/null

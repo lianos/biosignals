@@ -1,6 +1,11 @@
 #include "biosignals/convolve1d.h"
-#include <cmath>
+#include "biosignals/macros.h"
 
+#include <vector>
+#include <cmath>
+#include <limits>
+
+namespace biosignals {
 // TODO: You can use two separate vectors to smooth over padded heads/tails
 //       and incorporate those into main convolution so you don't have to
 //       erase from the head of `result` on the "way out" of this function.
@@ -9,14 +14,14 @@ std::vector<double> *
 convolve_1d(const std::vector<double> &x,
             const std::vector<double> &kernel, bool rescale) {
     double max_x, max_result, scale_factor;
-    int klen = kernel->size();
-    int n = x->size() + (2 * klen);
-    int N = n + kernel->size(); // used to pad head/tail
+    int klen = kernel.size();
+    int n = x.size() + (2 * klen);
+    int N = n + kernel.size(); // used to pad head/tail
     int i,j;
     double val;
 
     std::vector<double> *result = new std::vector<double>(N, 0.0);
-    max_x = abs((*x)[0]);
+    max_x = abs(x[0]);
     max_result = -1 * std::numeric_limits<double>::max();
 
     // Dodge head edge effects
@@ -45,7 +50,7 @@ convolve_1d(const std::vector<double> &x,
     for (i = x.size() + klen; i < n; i++) {
         for (j = 0; j < klen; j++) {
             val = (*result)[i+j] + x[x.size() - 1] * kernel[j];
-            result[i+j] = val;
+            (*result)[i+j] = val;
         }
     }
 
@@ -83,10 +88,12 @@ convolve_1d_inbounds(const std::vector<double> &x,
         end = ends[i] - 1;
         std::vector<double> tmp = std::vector<double>(end - start + 1, 0.0);
         std::copy(x.begin() + start, x.begin() + end, tmp.begin());
-        std::vector<double> *conv = convolve_1d(tmp, kernel, rescale);
-        std::copy(conv->begin(), conv->end(), out.begin() + start);
+        std::vector<double> *conv = biosignals::convolve_1d(tmp, kernel);
+        std::copy(conv->begin(), conv->end(), out->begin() + start);
         delete conv;
     }
     
     return out;
+}
+
 }
