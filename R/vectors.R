@@ -1,15 +1,3 @@
-asRle <- function(x, eps=1e-6) {
-  stopifnot(is.numeric(x))
-  ret <- .Call("Ras_rle", x, eps, PACKAGE="biosignals")
-  Rle(ret$values, ret$lengths)
-}
-
-expandRle <- function(x) {
-  stopifnot(is(x, "Rle"))
-  stopifnot(is.numeric(as.vector(x[1])))
-  .Call("Rexpand_rle", runLength(x), runValue(x), PACKAGE="biosignals")
-}
-
 slidingMax <- function(x, k=5L) {
   ret <- .Call('Rsliding_max', as.numeric(x), as.integer(k),
                PACKAGE="biosignals")
@@ -49,7 +37,23 @@ quantilePositions <- function(signal, bounds=IRanges(1, length(signal)),
 
   quants <- .Call("Rcoverage_quantiles", signal, start(bounds), end(bounds),
                   quantile.breaks, PACKAGE="biosignals")
-  colnames(quants) <- paste('quantile', gsub("0\\.", "", quantile.breaks), sep=".")
+  colnames(quants) <- paste('quantile', gsub("0\\.", "", quantile.breaks),
+                            sep=".")
   as.data.frame(quants)
 }
 
+## ----------------------------------------------------------------------------
+## These Rle functions are just there to test if the C++ functions are working
+## They are not exported
+asRle <- function(x, eps=1e-6) {
+  stopifnot(is.numeric(x))
+  .Call("Ras_rle", x, eps, PACKAGE="biosignals")
+}
+
+expandRle <- function(x) {
+  stopifnot(is(x, "Rle"))
+  stopifnot(is.numeric(as.vector(x[1])))
+  .Call("Rexpand_rle", runLength(x), runValue(x), PACKAGE="biosignals")
+}
+
+## ----------------------------------------------------------------------------

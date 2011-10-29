@@ -2,13 +2,13 @@ context("vector operations")
 
 test_that("Rle construction works", {
   x1 <- c(1, 1, 1, 1, 2, 2, 3, 4, 4, 4, 5, 6, 8, 8, 8.01)
-  expect_true(all(asRle(x1) == Rle(x1)))
+  expect_true(all(biosignals:::asRle(x1) == Rle(x1)))
 })
 
 test_that("Rle expansion works", {
   x <- c(0, 0, 1, 1, 1, 0.1, 0.1, 0.2, 3, 3, 4)
   r <- Rle(x)
-  expect_equal(expandRle(r), x)
+  expect_equal(biosignals:::expandRle(r), x)
 })
 
 test_that("terminal quantile calculation is sane", {

@@ -15,8 +15,8 @@ export(
   kdeSmooth,
   generateKernel,
 
-  asRle,
-  expandRle,
+  # asRle,
+  # expandRle,
   slidingMax,
   slidingMin,
   zeroCrossings,

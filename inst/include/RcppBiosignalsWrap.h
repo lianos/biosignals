@@ -6,8 +6,8 @@ namespace Rcpp {
     template <typename T>
     SEXP wrap(const biosignals::Rle<T>& rle) {
         S4 ans = S4("Rle");
-        ans.slot("values") = wrap(rle->values);
-        ans.slot("lengths") = wrap(rle->lengths);
+        ans.slot("values") = wrap(rle.values);
+        ans.slot("lengths") = wrap(rle.lengths);
         return ans;
     }
     

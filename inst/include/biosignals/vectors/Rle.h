@@ -9,7 +9,7 @@ namespace biosignals {
 template <class T> class Rle {
 public:
     
-    Rle(std::vector<T> &vals, double eps=1e-6) {
+    Rle(std::vector<T> const& vals, double eps=1e-6) {
         this->values = std::vector<T>();
         this->lengths = std::vector<int>();
         
@@ -39,7 +39,7 @@ public:
         }
     }
     
-    Rle(std::vector<T> &values, std::vector<int> &lengths) {
+    Rle(std::vector<T> const& values, std::vector<int> const& lengths) {
         this->values = values;
         this->lengths = lengths;
     }
@@ -68,10 +68,10 @@ public:
         return out;
     }
     
-    ~Rle() {
-        delete this->values;
-        delete this->lengths;
-    }
+    // ~Rle() {
+    //     delete this->values;
+    //     delete this->lengths;
+    // }
     
     // T opretator[](int32_t index) {
     //     
