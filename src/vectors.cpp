@@ -1,47 +1,6 @@
 #include "vectors.h"
 #include "biosignals/vectors/utils.h"
 
-std::pair< std::vector<int>, std::vector<double> >
-as_rle(std::vector<double> &vals, double eps) {
-    // std::vector<T> values;
-    std::vector<double> values;
-    std::vector<int> lengths;
-    std::pair< std::vector<int>, std::vector<double> > out;
-    
-    // T current_val, tmp_val;
-    double current_val, tmp_val;
-    int current_len;
-    
-    if (vals.size() == 0) {
-        out.first = lengths;
-        out.second = values;
-        return out;
-    }
-    
-    current_val = vals[0];
-    current_len = 1;
-    
-    for (int i = 1; i < vals.size(); i++) {
-        tmp_val = vals[i];
-        if (ALMOST_ZERO_EPS(tmp_val - current_val, eps)) {
-            current_len++;
-        } else {
-            lengths.push_back(current_len);
-            values.push_back(current_val);
-            current_len = 1;
-            current_val = tmp_val;
-        }
-    }
-    
-    if (values.back() != current_val) {
-        values.push_back(current_val);
-        lengths.push_back(current_len);
-    }
-    
-    out.first = lengths;
-    out.second = values;
-    return out;
-}
 
 // ----------------------------------------------------------------- Rinterface
 

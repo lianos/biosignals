@@ -3,12 +3,6 @@
 
 #include "RcppBiosignals.h"
 
-std::pair< std::vector<int>, std::vector<double> >
-as_rle(std::vector<double> &vals, double eps=1e-6);
-
-std::vector<double>
-expand_rle(std::vector<int> lengths, std::vector<double> &vals);
-
 // ----------------------------------------------------------------- Rinterface
 
 RcppExport SEXP
