@@ -69,6 +69,56 @@ expand_rle(std::vector<int> lengths, std::vector<double> &vals) {
 }
 
 // ----------------------------------------------------------------- Rinterface
+
+SEXP
+Ras_rle(SEXP vals_, SEXP eps_) {
+BEGIN_RCPP    
+    // switch(TYPEOF(x)) {
+    // case LGLSXP:
+    //     PROTECT(ans = Rle_logical_constructor(x, counts));
+    //     break;
+    // case INTSXP:
+    //     PROTECT(ans = Rle_integer_constructor(x, counts));
+    //     break;
+    // case REALSXP:
+    //     PROTECT(ans = Rle_real_constructor(x, counts));
+    //     break;
+    // case CPLXSXP:
+    //     PROTECT(ans = Rle_complex_constructor(x, counts));
+    //     break;
+    // case STRSXP:
+    //     PROTECT(ans = Rle_string_constructor(x, counts));
+    //     break;
+    // case RAWSXP:
+    //     PROTECT(ans = Rle_raw_constructor(x, counts));
+    //     break;
+    // default:
+    //     error("Rle computation of these types is not implemented");
+    // }
+    SEXP ret;
+    double eps = Rcpp::as<double>(eps_);
+    std::vector<double> vals = Rcpp::as< std::vector<double> >(vals_);
+    std::pair< std::vector<int>, std::vector<double> > out;
+    out = as_rle(vals, eps);
+
+    ret = Rcpp::List::create(Rcpp::Named("lengths", Rcpp::wrap(out.first)),
+                             Rcpp::Named("values", Rcpp::wrap(out.second)));
+    return ret;
+END_RCPP
+}
+
+SEXP
+Rexpand_rle(SEXP lengths_, SEXP vals_) {
+BEGIN_RCPP
+    std::vector<int> lengths = Rcpp::as< std::vector<int> >(lengths_);
+    std::vector<double> vals = Rcpp::as< std::vector<double> >(vals_);
+    std::vector<double> out = expand_rle(lengths, vals);
+    
+    return Rcpp::wrap(out);
+END_RCPP
+}
+
+
 SEXP
 Rzero_crossings(SEXP x_) {
 BEGIN_RCPP
@@ -126,3 +176,4 @@ BEGIN_RCPP
     return Rcpp::wrap(out);
 END_RCPP
 }
+
