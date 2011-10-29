@@ -1,3 +1,5 @@
+#if 0
+
 #include "turnpoints.h"
 
 #include <cstdlib>
@@ -65,3 +67,4 @@ BEGIN_RCPP
 END_RCPP
 }
 
+#endif

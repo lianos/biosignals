@@ -1,0 +1,5 @@
+#ifndef __RCPP_BIOSIGNALS_CONFIG_H__
+#define __RCPP_BIOSIGNALS_CONFIG_H__
+
+
+#endif

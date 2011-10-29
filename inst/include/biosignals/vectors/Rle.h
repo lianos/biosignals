@@ -1,6 +1,9 @@
 #ifndef __BS__RLE_H__
 #define __BS__RLE_H__
 
+// #include "biosignals/common.h"
+#include "biosignals/macros.h"
+
 namespace biosignals {
 
 template <class T> class Rle {
@@ -35,7 +38,7 @@ public:
         }
     }
     
-    Rle(std::vector<T> &values, &std::vector<int> lengths) {
+    Rle(std::vector<T> &values, std::vector<int> &lengths) {
         this->values = values;
         this->lengths = lengths;
     }
@@ -47,15 +50,15 @@ public:
         T val;
 
         for (i = 0; i < this->lengths.size(); i++) {
-            length += lengths[i];
+            length += this->lengths[i];
         }
 
         std::vector<T> out = std::vector<T>(length);
         
         sofar = 0;
         for (i = 0; i < lengths.size(); i++) {
-            val = vals[i];
-            len = lengths[i];
+            val = this->values[i];
+            len = this->lengths[i];
             for (j = 0; j < len; j++) {
                 out[sofar++] = val;
             }
@@ -68,12 +71,29 @@ public:
         delete this->values;
         delete this->lengths;
     }
-
-protected:
+    
+    // T opretator[](int32_t index) {
+    //     
+    // }
+    
+    // TODO: Rip of Rle_seqselect here
+    // Rle<T> select(int32_t start, int32_t width = -1) {
+    //     
+    // }
+    
+    // TODO: Move this to Rcpp::as<Rle>(wut) functionality
+    // SEXP asSEXP() {
+    //     SEXP ans;
+    //     PROTECT(ans = NEW_OBJECT(MAKE_CLASS("Rle")));
+    //     SET_SLOT(ans, install("values"), Rcpp::wrap(this->values));
+    //     SET_SLOT(ans, install("lengths"), Rcpp::wrap(this->lengths));
+    //     return ans;
+    // }
+    
+// protected:
     std::vector<T> values;
     std::vector<int> lengths;
 }
-
 
 }
 

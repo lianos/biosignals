@@ -10,7 +10,7 @@ Description: Do many things you want to do to "signal vectors."
   .
   See URLs for references.
 License: GPL (>= 3)
-Depends: R (>= 2.13.0), Rcpp (>= 0.9.7)
+Depends: R (>= 2.13.0), IRanges, Rcpp (>= 0.9.7)
 Imports: Rcpp, methods, IRanges
 Suggests: testthat (>= 0.5)
 LinkingTo: Rcpp,IRanges

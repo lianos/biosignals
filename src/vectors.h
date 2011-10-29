@@ -1,7 +1,11 @@
 #ifndef __VECTORS_H__
 #define __VECTORS_H__
 
-#include "biosignals.h"
+#include "RcppBiosignals.h"
+
+// #include "biosignals.h"
+// #include "biosignals/common.h"
+// #include "biosignals/vectors/Rle.h"
 
 // First element in pair is length, second is vals
 // template<typename T>
@@ -18,22 +22,22 @@ as_rle(std::vector<double> &vals, double eps=1e-6);
 std::vector<double>
 expand_rle(std::vector<int> lengths, std::vector<double> &vals);
 
-template <typename T>
-std::vector<int>
-zero_crossings(std::vector<T> &x, int start=0, int end=0);
-
-template <typename T>
-std::vector<T>
-sliding_window_minimum(std::vector<T> & ARR, int K);
-
-template <typename T>
-std::vector<T>
-sliding_window_maximum(std::vector<T> & ARR, int K);
-
-template <typename T>
-std::vector< std::vector<int> >
-coverage_quantiles(std::vector<T> &x, std::vector<int> starts,
-                   std::vector<int> ends, std::vector<double> percentiles);
+// template <typename T>
+// std::vector<int>
+// zero_crossings(std::vector<T> &x, int start=0, int end=0);
+// 
+// template <typename T>
+// std::vector<T>
+// sliding_window_minimum(std::vector<T> & ARR, int K);
+// 
+// template <typename T>
+// std::vector<T>
+// sliding_window_maximum(std::vector<T> & ARR, int K);
+// 
+// template <typename T>
+// std::vector< std::vector<int> >
+// coverage_quantiles(std::vector<T> &x, std::vector<int> starts,
+//                    std::vector<int> ends, std::vector<double> percentiles);
 
 // ----------------------------------------------------------------- Rinterface
 
