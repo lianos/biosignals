@@ -6,20 +6,9 @@
 
 #include "RcppBiosignalsConfig.h"
 
-// ----------------------------------------------------------------------------
-// include all? biosignals headers
-// #include "biosignals/common.h"
-// #include "biosignals/macros.h"
-//
-// #include "biosignals/convolve1d.h"
-//
-// 
-// #include "biosignals/vectors/utils.h"
 #include "biosignals/vectors/Rle.h"
 
-
 // ----------------------------------------------------------------------------
-
 // forward declarations (whatever that means)
 namespace Rcpp {
     // support wrap

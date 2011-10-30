@@ -7,7 +7,7 @@ all: .depend $(SHLIB)
 
 SRCFILES = $(shell find ../inst/include/biosignals -name "*.cpp")
 SRCFILES += $(shell find . -name "*.cpp")
-
+DEFINES = -DR_LIBRARY
 
 .depend:
 	@echo "===================================================================="

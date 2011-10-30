@@ -34,6 +34,7 @@ convolve_1d(const std::vector<double> &x,
 
     // Main convolution
     for (i = klen; i < x.size() + klen; i++) {
+        CHECK_INTERRUPT(i % 10000 == 9999)
         if (abs(x[i - klen]) > max_x) {
             max_x = abs(x[i - klen]);
         }
@@ -84,6 +85,7 @@ convolve_1d_inbounds(const std::vector<double> &x,
     std::vector<double> *out = new std::vector<double>(x.size(), init);
 
     for (int i = 0; i < starts.size(); i++) {
+        CHECK_INTERRUPT(i % 5000 == 4999)
         start = starts[i] - 1; // R -> C indexing
         end = ends[i] - 1;
         std::vector<double> tmp = std::vector<double>(end - start + 1, 0.0);

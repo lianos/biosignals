@@ -7,4 +7,12 @@
 #define ALMOST_EQ(x,y) ((SIGN(x-y) * (x-y)) < 1e-8)
 #define ALMOST_EQ_EPS(x,y,eps) ((SIGN(x-y) * (x-y)) < eps)
 
+#ifdef R_LIBRARY
+#include <R_ext/Utils.h>
+#define CHECK_INTERRUPT(x) { if (x) R_CheckUserInterrupt(); }
+#else
+#define CHECK_INTERRUPT(x)
+#endif
+
+
 #endif

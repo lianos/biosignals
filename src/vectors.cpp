@@ -32,6 +32,7 @@ BEGIN_RCPP
     SEXP ret;
     double eps = Rcpp::as<double>(eps_);
     std::vector<double> vals = Rcpp::as< std::vector<double> >(vals_);
+    // biosignals::Rle<double> rle = Rcpp::as< biosignals::Rle<double>(vals_);
     biosignals::Rle<double> rle(vals, eps);
     return Rcpp::wrap(rle);
 END_RCPP

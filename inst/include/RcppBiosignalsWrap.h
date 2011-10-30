@@ -3,6 +3,7 @@
 
 namespace Rcpp {
     
+    // Creates an IRanges::Rle object out of biosignals::Rle
     template <typename T>
     SEXP wrap(const biosignals::Rle<T>& rle) {
         S4 ans = S4("Rle");
