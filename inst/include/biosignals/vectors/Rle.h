@@ -82,14 +82,6 @@ public:
     //     
     // }
     
-    // TODO: Move this to Rcpp::as<Rle>(wut) functionality
-    // SEXP asSEXP() {
-    //     SEXP ans;
-    //     PROTECT(ans = NEW_OBJECT(MAKE_CLASS("Rle")));
-    //     SET_SLOT(ans, install("values"), Rcpp::wrap(this->values));
-    //     SET_SLOT(ans, install("lengths"), Rcpp::wrap(this->lengths));
-    //     return ans;
-    // }
     
 //protected:
 

@@ -12,6 +12,30 @@ namespace Rcpp {
         return ans;
     }
     
+    
+    namespace traits {
+        // Support Rcpp::as< Rle<double> >
+        template<typename T>
+        class Exporter< biosignals::Rle<T> > {
+        public:
+            Exporter(SEXP x) {
+                // const int RTYPE = ::Rcpp::traits::r_sexptype_traits<T>::rtype;
+                // if (TYPEOF(x) != RTYPE)
+                //     throw std::invalid_argument("Wrong R type for mapped vector");
+                ::Rcpp::S4 sx = ::Rcpp::S4(x);
+                values = ::Rcpp::as< std::vector<T> >(sx.slot("values"));
+                lengths = ::Rcpp::as< std::vector<int> >(sx.slot("lengths"));
+            }
+            
+            biosignals::Rle<T> get() {
+                return biosignals::Rle<T>(values, lengths);
+            }
+            
+        protected:
+            std::vector<T> values;
+            std::vector<int> lengths;
+        };
+    }
 }
 
 #endif

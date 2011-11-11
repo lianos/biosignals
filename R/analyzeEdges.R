@@ -102,7 +102,9 @@ detectEdges <- function(x, bandwidth=10, mu=0, sd=1, threshold=0.15,
 visualizeEdges <- function(x, mu=0, sd=1, bandwidth=10, threshold=0.15,
                            edge.window=2*bandwidth, nt=NULL,
                            nt.y=0.03 * par('usr')[3:4], .strand='+',
-                           ...) {
+                           draw.derivs=c(1, 2), ...) {
+  args <- list(...)
+
   if (missing(x)) {
     ## this is a test
     x <- c(rep(0, 15), rep(20, 15), -1, rep(0, 20))
@@ -119,27 +121,66 @@ visualizeEdges <- function(x, mu=0, sd=1, bandwidth=10, threshold=0.15,
   x1 <- convolve1d(x, k1)
   x2 <- convolve1d(x, k2)
 
-  ylim <- c(min(0, x, x0, x1, x2), max(x, x0, x1, x2))
+  if (is.null(args$ylim)) {
+    ylim <- c(min(0, x, x0, x1, x2), max(x, x0, x1, x2))
+  } else {
+    ylim <- args$ylim
+  }
 
-  plot(x, type='l', ylim=ylim, col='blue', lwd=2)
-  abline(h=0)
+  plot(x, type='l', ylim=ylim, col='black', lwd=2)
+  abline(h=0, lwd=3)
 
-  lines(x0, col='blue', lwd=1.5, lty='dotted')
-  lines(x1, col='red', lwd=1.5, lty='dotted')
-  lines(x2, col='green', lwd=1.5, lty='dotted')
+  draw.smooth <- args$draw.smooth
+  if (is.null(draw.smooth)) {
+    draw.smooth <- TRUE
+  }
+  if (draw.smooth) {
+    lines(x0, col='black', lwd=1.5, lty='dotted')
+  }
 
-  legend('bottomright', legend=c('dervi1', 'deriv2'),
-         text.col=c('red', 'green'))
+
+  if (is.numeric(draw.derivs)) {
+    legend.text <- character()
+    legend.col <- character()
+    if (1 %in% draw.derivs) {
+      lines(x1, col='red', lwd=1.5, lty='dotted')
+      legend.text <- '1st deriv'
+      legend.col <- 'red'
+    }
+    if (2 %in% draw.derivs) {
+      lines(x2, col='blue', lwd=1.5, lty='dotted')
+      legend.text <- c(legend.text, '2nd deriv')
+      legend.col <- c(legend.col, 'blue')
+    }
+    legend('bottomright', legend=legend.text, text.col=legend.col)
+  }
+
 
   edges <- detectPeaksByEdges(x, bandwidth=bandwidth, mu=mu, sd=sd,
                               threshold=threshold, .strand=.strand,
                               ...)
-  abline(v=start(edges), col='green', lty='dashed', lwd=2)
-  abline(v=end(edges), col='red', lty='dashed', lwd=2)
+
+  draw.edges <- args$draw.edges
+  if (is.null(draw.edges)) {
+    draw.edges <- TRUE
+  }
+  if (draw.edges) {
+    abline(v=start(edges), col='green', lty='dashed', lwd=2)
+    abline(v=end(edges), col='red', lty='dashed', lwd=2)
+    tryCatch({
+      rect(start(edges), ylim[1], end(edges), ylim[2], col='#6f6f6f66',
+           border=NA, density=-1)
+    }, error=function(e) NULL)
+  }
+
+
 
   if (is(nt, 'DNAString') || is.character(nt)) {
     nt.y[1] <- min(-2, nt.y[1])
     nt.y[2] <- max(2, nt.y[2])
+    if (nt.y[2] > 0) {
+      nt.y <- nt.y - (nt.y[2] + .25)
+    }
     acgt <- c(A='green', C='blue', G='darkorange', T='red')
     if (.strand == '-') {
       nt <- reverseComplement(DNAString(nt))

@@ -46,15 +46,14 @@ setMethod("convolve1d", c(x="Rle"),
 function(x, kernel='normal', rescale=TRUE, bandwidth=20, lower=0, ...) {
   islands <- slice(x, lower=lower, includeLower=lower != 0, rangesOnly=TRUE)
   if (is.character(kernel)) {
-    kernel <- generateKernel(kernel, bandwidth=bandiwdth, ...)
+    kernel <- generateKernel(kernel, bandwidth=bandwidth, ...)
   }
   stopifnot(is.numeric(kernel))
   if (length(islands) == 0) {
     ret <- Rle(values=0, lengths=length(x))
   } else {
     ret <- .Call("Rconvolve_rle", x, kernel, start(islands), width(islands),
-                 rescale=rescale)
-    ret <- Rle(ret)
+                 rescale=rescale, PACKAGE="biosignals")
   }
   ret
 })

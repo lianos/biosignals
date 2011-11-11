@@ -23,6 +23,9 @@ Ras_rle(SEXP vals_, SEXP eps_);
 RcppExport SEXP
 Rexpand_rle(SEXP lengths_, SEXP vals_);
 
+RcppExport SEXP
+Rexpand_rle_S4(SEXP rle_);
+
 #endif
 
 // --------------------------------------------------------------------- scratch

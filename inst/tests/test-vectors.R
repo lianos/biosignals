@@ -9,6 +9,7 @@ test_that("Rle expansion works", {
   x <- c(0, 0, 1, 1, 1, 0.1, 0.1, 0.2, 3, 3, 4)
   r <- Rle(x)
   expect_equal(biosignals:::expandRle(r), x)
+  expect_equal(biosignals:::expandRleS4(r), x)
 })
 
 test_that("terminal quantile calculation is sane", {

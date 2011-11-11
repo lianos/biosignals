@@ -4,51 +4,6 @@
 
 // ----------------------------------------------------------------- Rinterface
 
-SEXP
-Ras_rle(SEXP vals_, SEXP eps_) {
-BEGIN_RCPP    
-    // switch(TYPEOF(x)) {
-    // case LGLSXP:
-    //     PROTECT(ans = Rle_logical_constructor(x, counts));
-    //     break;
-    // case INTSXP:
-    //     PROTECT(ans = Rle_integer_constructor(x, counts));
-    //     break;
-    // case REALSXP:
-    //     PROTECT(ans = Rle_real_constructor(x, counts));
-    //     break;
-    // case CPLXSXP:
-    //     PROTECT(ans = Rle_complex_constructor(x, counts));
-    //     break;
-    // case STRSXP:
-    //     PROTECT(ans = Rle_string_constructor(x, counts));
-    //     break;
-    // case RAWSXP:
-    //     PROTECT(ans = Rle_raw_constructor(x, counts));
-    //     break;
-    // default:
-    //     error("Rle computation of these types is not implemented");
-    // }
-    SEXP ret;
-    double eps = Rcpp::as<double>(eps_);
-    std::vector<double> vals = Rcpp::as< std::vector<double> >(vals_);
-    // biosignals::Rle<double> rle = Rcpp::as< biosignals::Rle<double>(vals_);
-    biosignals::Rle<double> rle(vals, eps);
-    return Rcpp::wrap(rle);
-END_RCPP
-}
-
-SEXP
-Rexpand_rle(SEXP lengths_, SEXP vals_) {
-BEGIN_RCPP
-    std::vector<int> lengths = Rcpp::as< std::vector<int> >(lengths_);
-    std::vector<double> vals = Rcpp::as< std::vector<double> >(vals_);
-    biosignals::Rle<double> rle = biosignals::Rle<double>(vals, lengths);
-    std::vector<double> out = rle.expand();
-    return Rcpp::wrap(out);
-END_RCPP
-}
-
 
 SEXP
 Rzero_crossings(SEXP x_) {
@@ -108,3 +63,56 @@ BEGIN_RCPP
 END_RCPP
 }
 
+// ----------------------------------------------------------- Testing Purposes
+SEXP
+Ras_rle(SEXP vals_, SEXP eps_) {
+BEGIN_RCPP    
+    // switch(TYPEOF(x)) {
+    // case LGLSXP:
+    //     PROTECT(ans = Rle_logical_constructor(x, counts));
+    //     break;
+    // case INTSXP:
+    //     PROTECT(ans = Rle_integer_constructor(x, counts));
+    //     break;
+    // case REALSXP:
+    //     PROTECT(ans = Rle_real_constructor(x, counts));
+    //     break;
+    // case CPLXSXP:
+    //     PROTECT(ans = Rle_complex_constructor(x, counts));
+    //     break;
+    // case STRSXP:
+    //     PROTECT(ans = Rle_string_constructor(x, counts));
+    //     break;
+    // case RAWSXP:
+    //     PROTECT(ans = Rle_raw_constructor(x, counts));
+    //     break;
+    // default:
+    //     error("Rle computation of these types is not implemented");
+    // }
+    SEXP ret;
+    double eps = Rcpp::as<double>(eps_);
+    std::vector<double> vals = Rcpp::as< std::vector<double> >(vals_);
+    // biosignals::Rle<double> rle = Rcpp::as< biosignals::Rle<double>(vals_);
+    biosignals::Rle<double> rle(vals, eps);
+    return Rcpp::wrap(rle);
+END_RCPP
+}
+
+SEXP
+Rexpand_rle(SEXP lengths_, SEXP vals_) {
+BEGIN_RCPP
+    std::vector<int> lengths = Rcpp::as< std::vector<int> >(lengths_);
+    std::vector<double> vals = Rcpp::as< std::vector<double> >(vals_);
+    biosignals::Rle<double> rle = biosignals::Rle<double>(vals, lengths);
+    std::vector<double> out = rle.expand();
+    return Rcpp::wrap(out);
+END_RCPP
+}
+
+SEXP
+Rexpand_rle_S4(SEXP rle_) {
+BEGIN_RCPP
+    biosignals::Rle<double> rle = Rcpp::as< biosignals::Rle<double> >(rle_);
+    return Rcpp::wrap(rle.expand());
+END_RCPP
+}

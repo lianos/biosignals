@@ -56,4 +56,9 @@ expandRle <- function(x) {
   .Call("Rexpand_rle", runLength(x), runValue(x), PACKAGE="biosignals")
 }
 
+expandRleS4 <- function(x) {
+  stopifnot(is(x, "Rle"))
+  .Call("Rexpand_rle_S4", x, PACKAGE="biosignals")
+}
+
 ## ----------------------------------------------------------------------------
