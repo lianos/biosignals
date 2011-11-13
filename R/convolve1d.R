@@ -43,31 +43,33 @@ function(x, kernel='normal', rescale=TRUE, bandwidth=20,
 })
 
 setMethod("convolve1d", c(x="Rle"),
-function(x, kernel='normal', rescale=TRUE, bandwidth=20, lower=0, ...) {
-  islands <- slice(x, lower=lower, includeLower=lower != 0, rangesOnly=TRUE)
+function(x, kernel='normal', rescale=TRUE, bandwidth=20, lower=0,
+         eps=1e-6, ...) {
+  y <- slice(x, lower=lower, includeLower=lower != 0)
+  ret <- convolve1d(y, kernel, rescale, bandwidth, eps=eps, ...)
+  subject(ret)
+})
+
+setMethod("convolve1d", c(x="RleViews"),
+function(x, kernel='normal', rescale=TRUE, bandwidth=20, eps=1e-6, ...) {
   if (is.character(kernel)) {
     kernel <- generateKernel(kernel, bandwidth=bandwidth, ...)
   }
   stopifnot(is.numeric(kernel))
-  if (length(islands) == 0) {
-    ret <- Rle(values=0, lengths=length(x))
-  } else {
-    ret <- .Call("Rconvolve_rle", x, kernel, start(islands), width(islands),
-                 rescale=rescale, PACKAGE="biosignals")
+  
+  x.rle <- subject(x)
+  islands <- ranges(x)
+  starts <- start(islands)
+  if (is.unsorted(starts)) {
+    stop("Starts in convolve1d,Rle must be sorted non-decreasing order")
   }
-  ret
+  
+  if (length(islands) == 0) {
+    x.rle <- Rle(values=0, lengths=length(x.rle))
+  } else {
+    x.rle <- .Call("Rconvolve_rle", x.rle, kernel, starts, width(islands),
+                   rescale, eps, PACKAGE="biosignals")
+  }
+  
+  Views(x.rle, islands)
 })
-
-## setMethod("convolve1d", c(x="Rle"),
-## function(x, kernel='normal', rescale=TRUE, bandwidth=20, lower=0, ...) {
-##   islands <- slice(x, lower=lower, includeLower=lower != 0, rangesOnly=TRUE)
-##   if (length(islands) == 0) {
-##     ret <- Rle(values=0, lengths=length(x))
-##   } else {
-##     ret <- convolve1d(as.numeric(x), kernel, rescale=rescale,
-##                       bandwidth=bandwidth, starts=start(islands),
-##                       ends=end(islands), ...)
-##     ret <- Rle(ret)
-##   }
-##   ret
-## })
