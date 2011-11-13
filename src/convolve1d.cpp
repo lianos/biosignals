@@ -11,36 +11,8 @@ BEGIN_RCPP
     // return Rcpp::wrap(*result);
     std::vector<double> result = biosignals::convolve_1d(x, kernel, rescale);
     return Rcpp::wrap(result);
-    
 END_RCPP
 }
-
-// SEXP Rfencepost_convolve_1d(SEXP x_, SEXP kernel_, SEXP starts_, SEXP ends_,
-//                             SEXP rescale_) {
-// BEGIN_RCPP
-//     std::vector<double> x = Rcpp::as< std::vector<double> >(x_);
-//     std::vector<double> kernel = Rcpp::as< std::vector<double> >(kernel_);
-//     Rcpp::IntegerVector starts(starts_);
-//     Rcpp::IntegerVector ends(ends_);
-//     bool rescale = Rcpp::as<bool>(rescale_);
-//     Rcpp::NumericVector out(x.size());
-//     int start,end;
-// 
-//     for (int i = 0; i < starts.size(); i++) {
-//         start = starts[i] - 1; // R -> C indexing
-//         end = ends[i] - 1;
-//         std::vector<double> tmp = std::vector<double>(end - start + 1, 0.0);
-//         std::copy(x.begin() + start, x.begin() + end, tmp.begin());
-//         std::vector<double> *conv = biosignals::convolve_1d(tmp, kernel); //, rescale);
-// 
-//         std::copy(conv->begin(), conv->end(), out.begin() + start);
-//         delete conv;
-//     }
-// 
-//     return Rcpp::wrap(out);
-// END_RCPP
-// }
-
 
 /**
  * Convolves the specified reanges (starts, widths) of an Rle.
@@ -122,4 +94,31 @@ BEGIN_RCPP
     return ans;
 END_RCPP
 }
+
+// SEXP Rfencepost_convolve_1d(SEXP x_, SEXP kernel_, SEXP starts_, SEXP ends_,
+//                             SEXP rescale_) {
+// BEGIN_RCPP
+//     std::vector<double> x = Rcpp::as< std::vector<double> >(x_);
+//     std::vector<double> kernel = Rcpp::as< std::vector<double> >(kernel_);
+//     Rcpp::IntegerVector starts(starts_);
+//     Rcpp::IntegerVector ends(ends_);
+//     bool rescale = Rcpp::as<bool>(rescale_);
+//     Rcpp::NumericVector out(x.size());
+//     int start,end;
+// 
+//     for (int i = 0; i < starts.size(); i++) {
+//         start = starts[i] - 1; // R -> C indexing
+//         end = ends[i] - 1;
+//         std::vector<double> tmp = std::vector<double>(end - start + 1, 0.0);
+//         std::copy(x.begin() + start, x.begin() + end, tmp.begin());
+//         std::vector<double> *conv = biosignals::convolve_1d(tmp, kernel); //, rescale);
+// 
+//         std::copy(conv->begin(), conv->end(), out.begin() + start);
+//         delete conv;
+//     }
+// 
+//     return Rcpp::wrap(out);
+// END_RCPP
+// }
+
 
