@@ -47,7 +47,6 @@ BEGIN_RCPP
             // Fill in the regions that are not convolved with values from x
             width = start - at;
             PROTECT(tmp_rle = seqselect_Rle(x_, &at, &width, 1));
-            
             rle = Rcpp::as< Rle<double> >(tmp_rle);
             UNPROTECT(1);
             
