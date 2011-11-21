@@ -64,9 +64,7 @@ BEGIN_RCPP
         rle = Rcpp::as< Rle<double> >(tmp_rle);
         UNPROTECT(1);
         
-        std::vector<double> tmp_vals = rle.expand();
-        std::vector<double> result = convolve_1d(tmp_vals, kernel, rescale);
-        rle = Rle<double>(result, eps);
+        rle = convolve_1d(rle, kernel, rescale);
         
         vals.insert(vals.end(), rle.values.begin(), rle.values.end());
         lens.insert(lens.end(), rle.lengths.begin(), rle.lengths.end());
@@ -93,31 +91,3 @@ BEGIN_RCPP
     return ans;
 END_RCPP
 }
-
-// SEXP Rfencepost_convolve_1d(SEXP x_, SEXP kernel_, SEXP starts_, SEXP ends_,
-//                             SEXP rescale_) {
-// BEGIN_RCPP
-//     std::vector<double> x = Rcpp::as< std::vector<double> >(x_);
-//     std::vector<double> kernel = Rcpp::as< std::vector<double> >(kernel_);
-//     Rcpp::IntegerVector starts(starts_);
-//     Rcpp::IntegerVector ends(ends_);
-//     bool rescale = Rcpp::as<bool>(rescale_);
-//     Rcpp::NumericVector out(x.size());
-//     int start,end;
-// 
-//     for (int i = 0; i < starts.size(); i++) {
-//         start = starts[i] - 1; // R -> C indexing
-//         end = ends[i] - 1;
-//         std::vector<double> tmp = std::vector<double>(end - start + 1, 0.0);
-//         std::copy(x.begin() + start, x.begin() + end, tmp.begin());
-//         std::vector<double> *conv = biosignals::convolve_1d(tmp, kernel); //, rescale);
-// 
-//         std::copy(conv->begin(), conv->end(), out.begin() + start);
-//         delete conv;
-//     }
-// 
-//     return Rcpp::wrap(out);
-// END_RCPP
-// }
-
-

@@ -140,6 +140,15 @@ convolve_1d(const std::vector<double> &x,
     return result;
 }
 
+Rle<double>
+convolve_1d(Rle<double> &rle,
+            std::vector<double> const& kernel,
+            bool rescale, double eps) {
+    std::vector<double> tmp = rle.expand();
+    std::vector<double> result = convolve_1d(tmp, kernel, rescale);
+    return Rle<double>(result, eps);
+}
+
 std::vector<double>
 convolve_1d_inbounds(const std::vector<double> &x,
                      const std::vector<double> &kernel,

@@ -2,6 +2,7 @@
 #define __BS__RLE_H__
 
 #include <vector>
+#include <numeric>
 #include "biosignals/macros.h"
 
 namespace biosignals {
