@@ -14,6 +14,8 @@ detectEdges <- function(x, bandwidth=10, mu=0, sd=1, threshold=0.15,
   k2 <- generateKernel('gaussian', bandwidth=bandwidth, mu=mu, sd=sd, deriv=2)
   ## k3 <- generateKernel('gaussian', bandwidth=bandwidth, mu=mu, sd=sd, deriv=3)
 
+
+
   x1 <- convolve1d(x, k1) ## first derivative of data
   x2 <- convolve1d(x, k2) ## locates peak of first deriv when this crosses 0
   ## x3 <- convolve1d(x, k3) ## how steep is the edge?
@@ -37,8 +39,9 @@ detectEdges <- function(x, bandwidth=10, mu=0, sd=1, threshold=0.15,
     edges.start <- edges.start[!bad.starts]
   }
   x1s <- x1
+  ## DEBUG: This is where the edge finding gets screwed in Jarid2
   x1s[x1s <= 1] <- 1 ## only look at sliding minima for values north of 0
-  min.x1 <- slidingMin(x1s, bandwidth)
+  min.x1 <- slidingMin(x1s, edge.window)
 
   ## This is impossible, but save a divide by zero
   bad.1 <- x1[edges.start] <= min.x1[edges.start]
@@ -68,7 +71,7 @@ detectEdges <- function(x, bandwidth=10, mu=0, sd=1, threshold=0.15,
   }
   x1e <- x1
   x1e[x1e >= -1] <- -1 ## only look for sliding maxima for vals south of 0
-  max.x1 <- slidingMax(x1e, bandwidth)
+  max.x1 <- slidingMax(x1e, edge.window)
 
   bad.2 <- x1[edges.end] >= max.x1[edges.end]
   if (any(bad.2)) {
@@ -153,12 +156,23 @@ visualizeEdges <- function(x, mu=0, sd=1, bandwidth=10, threshold=0.15,
       legend.col <- c(legend.col, 'blue')
     }
     legend('bottomright', legend=legend.text, text.col=legend.col)
+
+    ## d1 <- diff(x0)
+    ## d1 <- c(d1[1], d1)
+    ## d1 <- (d1 / max(d1)) * max(x0)
+    ## browser()
+    ## lines(d1, col='orange', lwd=1.5)
+
+    ## d2 <- diff(d1)
+    ## d2 <- c(d2[1], d2)
+    ## d2 <- (d2 / max(d2)) * max(x0)
+    ## lines(d2, col='green', lwd=1.5)
   }
 
 
   edges <- detectPeaksByEdges(x, bandwidth=bandwidth, mu=mu, sd=sd,
                               threshold=threshold, .strand=.strand,
-                              ...)
+                              edge.window=edge.window, ...)
 
   draw.edges <- args$draw.edges
   if (is.null(draw.edges)) {

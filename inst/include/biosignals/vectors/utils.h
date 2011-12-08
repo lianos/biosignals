@@ -46,7 +46,7 @@ namespace sliding {
  * Helper function to keep the value of the local min/max in current window
  *
  * Also slides window along vector so that the max/min is always correct for
- * a window that is (i - win_length:i + win_length:i)
+ * a window that is (i - win_length):(i + win_length:i)
  */
 template <typename T>
 void
@@ -83,7 +83,6 @@ update_window_stats(std::vector<T> &x, int &back, int &front, int &current,
                     val = x[current];
                 }
             }
-
         } // previous min/max fell outside of window
     } // removing elements from tail
 }
