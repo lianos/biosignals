@@ -1,8 +1,22 @@
+##' Find the maximum values in sliding window
+##'
+##' @param x The vector of values to search
+##' @param k The size of the window to search in. The window is size k*2
+##' @return vector of \code{length(x)}, indicating the maximum value found
+##' in the window centered at the given position and includes k bins up
+##' and downstream.
 slidingMax <- function(x, k=5L) {
   ret <- .Call('Rsliding_max', as.numeric(x), as.integer(k),
                PACKAGE="biosignals")
 }
 
+##' Find minimum values in sliding window
+##'
+##' @param x The vector of values to search
+##' @param k The size of the window to search in. The window is size k*2
+##' @return vector of \code{length(x)}, indicating the minimum value found
+##' in the window centered at the given position and includes k bins up
+##' and downstream.
 slidingMin <- function(x, k=5L) {
   .Call('Rsliding_min', as.numeric(x), as.integer(k), PACKAGE="biosignals")
 }

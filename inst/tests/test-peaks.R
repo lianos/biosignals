@@ -35,9 +35,17 @@ test_that("signals do not cause IRanges with negative widths", {
 
 ## TODO: Fill out unit test and fix the bug!
 test_that("edge fenceposts where first deriv doesn't cross 0 are caught", {
+  ## This region was found when looking at comparisons of peak calls over
+  ## the 3'UTR of Jarid2 (mm9).
   ## As of 2011-12-05, one way to ditch noisy edges was to only look in regions
   ## when the first deriv is < 0 to identify "leading" edges (ones that start
   ## a peak). The test data was taken from a HITS-CLIP region over Jarid2, ie:
-  
-  
+  r13 <- load.it('/Users/stavros/cBio/data/ClipAtlas/mm9/datasets/2011-11-28-aly/reads.multimap/reads.chr13.+.rda')
+  c13 <- coverage(ranges(r13[strand(r13) == '+']))
+
+  ## Entire 3'UTR is chr13:45,015,335-45,017,012
+  jarid2 <- c13[45015335:45017012]
+
+  ## Some
+  j2 <- jarid2[1005:1310]
 })
