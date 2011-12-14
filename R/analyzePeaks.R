@@ -136,6 +136,8 @@ function(x, bandwidth, mu, sd, min.height, pad.by=1L,
 ##' to be compared to.
 filterPeaks <- function(x, edges, min.height=1L, peak.threshold=0.75,
                         edge.window=5L, threshold.maxs=NULL) {
+  stop("This isn't working yet -- jump to the DEBUG/threshold stuff")
+  
   if (edge.window < 1) {
     stop("edge.window must be non-negative")
   }
@@ -163,7 +165,8 @@ filterPeaks <- function(x, edges, min.height=1L, peak.threshold=0.75,
   
   edges <- edges[keep.height]
   maxs <- maxs[keep.height]
-
+  
+  ## DEBUG: This thresholding code is not correct
   if (is.null(threshold.maxs)) {
     start.window <- IRanges(start(edges) - edge.window + 1L, width=edge.window)
     end(start.window) <- pmax(1L, end(start.window))
