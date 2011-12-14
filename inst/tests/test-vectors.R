@@ -1,5 +1,24 @@
 context("vector operations")
 
+slidingExtrema <- function(x, k, extreme=c('min', 'max')) {
+  extreme <- match.fun(match.arg(extreme))
+  ans <- numeric(length(x))
+  
+  for (i in 1:length(x)) {
+    idxs <- (i - k):(i + k)
+    idxs <- idxs[idxs > 0 & idxs <= length(x)]
+    ans[i] <- extreme(x[idxs])
+  }
+  
+  ans
+}
+
+test_that("sliding min/max functions work", {
+  x <- sample(1:50)
+  expect_equal(slidingMax(x, 5), slidingExtrema(x, 5, 'max'))
+  expect_equal(slidingMin(x, 5), slidingExtrema(x, 5, 'min'))
+})
+
 test_that("terminal quantile calculation is sane", {
   quantile.breaks <- c(0.05, 0.10, 0.15, 0.20, 0.80, 0.85, 0.90, 0.95)
   x <- c(6, 6, 6, 6, 6, 6, 7, 8, 9, 9, 10, 10, 9, 9, 10, 13, 13,

@@ -59,7 +59,7 @@ update_window_stats(std::vector<T> &x, int &back, int &front, int &current,
                     T &val, int win_length, int i, bool is_min) {
     int j;
     while ((front - i <= win_length) && (front < x.size())) {
-        // Add elements to the fronteir
+        // Add elements to the frontier
         if ((is_min && x[front] < val) || (!is_min && x[front] > val)) {
             current = front;
             val = x[current];

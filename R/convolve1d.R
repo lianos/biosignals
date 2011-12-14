@@ -36,7 +36,7 @@ function(x, kernel='normal', rescale=TRUE, bandwidth=20, eps=1e-6, ...) {
     stop("Starts in convolve1d,Rle must be sorted non-decreasing order")
   }
   
-  if (length(islands) == 0) {
+  if (length(islands) == 0L) {
     x.rle <- Rle(values=0, lengths=length(x.rle))
   } else {
     x.rle <- .Call("Rconvolve_rle", x.rle, kernel, starts, width(islands),

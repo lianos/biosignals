@@ -6,8 +6,7 @@
 ##' in the window centered at the given position and includes k bins up
 ##' and downstream.
 slidingMax <- function(x, k=5L) {
-  ret <- .Call('Rsliding_max', as.numeric(x), as.integer(k),
-               PACKAGE="biosignals")
+  .Call('Rsliding_max', as.numeric(x), as.integer(k), PACKAGE="biosignals")
 }
 
 ##' Find minimum values in sliding window

@@ -14,30 +14,23 @@
 ##' @param sd The std deviation of the kernel
 ##' @param threshold A number between 0 and 1 used to filter out noise. It
 ##' indicates how obvious a step has to be in order to be considered a
-##' transition.
+##' transition. (not used now)
+##' @param half.window The region around each point in \code{x} to use when
+##' trying to filter out noise by step-size (not used now)
 detectEdges <- function(x, bandwidth=10, mu=0, sd=1, threshold=0.15,
                         half.window=ceiling(bandwidth * 2), ...) {
-  ## k0 <- generateKernel('gaussian', bandwidth=bandwidth, mu=mu, sd=sd, deriv=0)
+  ## NOTE: The original noise-cleaning code was moved out and stored in
+  ##       the `with-original-noise-fiter` branch. cf. `localExtrema.R` to get
+  ##       an idea about the direction to go in.
   k1 <- generateKernel('gaussian', bandwidth=bandwidth, mu=mu, sd=sd, deriv=1)
   k2 <- generateKernel('gaussian', bandwidth=bandwidth, mu=mu, sd=sd, deriv=2)
-  ## k3 <- generateKernel('gaussian', bandwidth=bandwidth, mu=mu, sd=sd, deriv=3)
 
-
-  ## x0 <- convolve1d(x, ko) ## smoothed data
   x1 <- convolve1d(x, k1) ## first derivative of data
   x2 <- convolve1d(x, k2) ## locates peak of first deriv when this crosses 0
-  ## x3 <- convolve1d(x, k3) ## how steep is the edge?
 
   ## Locations where second derivative cross 0 are the potential regions
   ## where an edge will be.
   zeroes <- zeroCrossings(x2)
-
-  ## Filter out "noisy edges".
-  ## Ensuring that the value at the peaks of x1 (deriv 1) "clear" the minima
-  ## of their surround, defined by `half.window`
-
-  ## mins <- slidingMin(x0, half.window)
-  ## maxs <- slidingMax(x0, half.window)
 
   ## ---------------------------------------------------------------------------
   ## Find edges which might start a peak -- peaks of first derivative
@@ -45,72 +38,17 @@ detectEdges <- function(x, bandwidth=10, mu=0, sd=1, threshold=0.15,
   ## positions where the 2nd derivative switches from positive to negative
   ## indicate the potential start of an "upswing" (peak)
   edges.start <- zeroes[as.logical(x2[zeroes - 1] > 0)]
-  if (length(edges.start) == 0L) {
-    es <- integer()
-  } else {
-    ## bad.starts <- as.logical(x1[edges.start] <= 0)
-    ## if (any(bad.starts)) {
-    ##   edges.start <- edges.start[!bad.starts]
-    ## }
-    ## x1s <- x1
-    ## DEBUG: This is where the edge finding gets screwed in Jarid2
-    # x1s[x1s <= 1] <- 1 ## only look at sliding minima for values north of 0
-    ## min.x1 <- slidingMin(x1s, half.window)
-
-    ## This is impossible, but save a divide by zero
-    # bad.1 <- x1[edges.start] <= min.x1[edges.start]
-    # if (any(bad.1)) {
-    #   edges.start <- edges.start[!bad.1]
-    # }
-
-    ## Only keep edges if the height of first derivative at the location
-    ## of the edge is sufficiently far around its local minima, eg. the
-    ## height of the local minimum is only a fraction of the height at
-    ## of d1 @ the edge
-    ## es <- edges.start[min.x1[edges.start] / x1[edges.start] < threshold]
-
-    ## take two
-    ## keep.rise <- mins[edges.start] / maxs[edges.start] <= threshold
-    ## es <- edges.start[keep.rise]
-
-    ## no filtering
-    es <- edges.start
-  }
-
+  ## Code to filter noise was removed from here.
+  
   ## ---------------------------------------------------------------------------
   ## Find edges which might end a peak
   ##
   ## positions where 2nd derivative switches from negative to positive
   ## indicate potential end of a peak -- this is where an edge is
   edges.end <- zeroes[as.logical(x2[zeroes - 1] < 0)]
-  if (length(edges.end) == 0L) {
-    ee <- integer()
-  } else {
-    ## bad.ends <- as.logical(x1[edges.end] >= 0)
-    ## if (any(bad.ends)) {
-    ##   edges.end <- edges.end[!bad.ends]
-    ## }
-    ## x1e <- x1
-    ## x1e[x1e >= -1] <- -1 ## only look for sliding maxima for vals south of 0
-    ## max.x1 <- slidingMax(x1e, half.window)
-
-    ## bad.2 <- x1[edges.end] >= max.x1[edges.end]
-    ## if (any(bad.2)) {
-    ##   edges.end <- edges.end[!bad.2]
-    ## }
-
-    ## Only keep edges if the height of first derivative at the location
-    ## of the edge is sufficiently far around its local minima
-    ## ee <- edges.end[max.x1[edges.end] / x1[edges.end] < threshold]
-
-    ## take 2
-    ## keep.fall <- mins[edges.start] / maxs[edges.start] <= threshold
-    ## ee <- edges.end[keep.fall]
-
-    ee <- edges.end
-  }
-
-  list(start=es, end=ee)
+  ## Code to filter noise was removd here.
+  
+  list(start=edges.start, end=edges.end)
 }
 
 ################################################################################
@@ -165,7 +103,6 @@ visualizeEdges <- function(x, mu=0, sd=1, bandwidth=10, threshold=0.15,
     lines(x0, col='black', lwd=1.5, lty='dotted')
   }
 
-
   if (is.numeric(draw.derivs)) {
     legend.text <- character()
     legend.col <- character()
@@ -180,23 +117,9 @@ visualizeEdges <- function(x, mu=0, sd=1, bandwidth=10, threshold=0.15,
       legend.col <- c(legend.col, 'blue')
     }
     legend('bottomright', legend=legend.text, text.col=legend.col)
-
-    ## d1 <- diff(x0)
-    ## d1 <- c(d1[1], d1)
-    ## d1 <- (d1 / max(d1)) * max(x0)
-    ## browser()
-    ## lines(d1, col='orange', lwd=1.5)
-
-    ## d2 <- diff(d1)
-    ## d2 <- c(d2[1], d2)
-    ## d2 <- (d2 / max(d2)) * max(x0)
-    ## lines(d2, col='green', lwd=1.5)
   }
 
-
-  edges <- detectPeaksByEdges(x, bandwidth=bandwidth, mu=mu, sd=sd,
-                              threshold=threshold, .strand=.strand,
-                              edge.window=edge.window, ...)
+  edges <- detectPeaksByEdges(x, bandwidth=bandwidth, mu=mu, sd=sd, ...)
 
   draw.edges <- args$draw.edges
   if (is.null(draw.edges)) {
@@ -210,8 +133,6 @@ visualizeEdges <- function(x, mu=0, sd=1, bandwidth=10, threshold=0.15,
            border=NA, density=-1)
     }, error=function(e) NULL)
   }
-
-
 
   if (is(nt, 'DNAString') || is.character(nt)) {
     nt.y[1] <- min(-2, nt.y[1])

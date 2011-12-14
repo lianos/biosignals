@@ -13,9 +13,12 @@ test_that("double starts (ends) are refined reasonably in a local peak", {
           547,  547,  547,  546,  546,  546,  545,  544,  543,  542,  526,  520,
           441,   65,   41,   24,   19,   16,   13,   12,   11,   11,   10,    7,
             5,    3,    2,    2,    1,    1,    1,    1,    1)
-  de <- detectPeaksByEdges(x, bandwidth=36, bandwidths=c(28, 21))
+  de <- detectPeaksByEdges(x, bandwidth=36, ignore.from.start=5)
   expect_is(de, 'IRanges')
-  expect_equal(length(de), 1)
+  
+  ## This test was for noise filtering, which has been removed. The 'no-filter'
+  ## code will find 2 (UGLY) peaks here
+  expect_equal(length(de), 2, info="check `ignore.from.start`")
 })
 
 test_that("signals do not cause IRanges with negative widths", {
@@ -33,19 +36,3 @@ test_that("signals do not cause IRanges with negative widths", {
   expect_true(width(de)[1] > 35 && width(de)[1] < 42)
 })
 
-## TODO: Fill out unit test and fix the bug!
-test_that("edge fenceposts where first deriv doesn't cross 0 are caught", {
-  ## This region was found when looking at comparisons of peak calls over
-  ## the 3'UTR of Jarid2 (mm9).
-  ## As of 2011-12-05, one way to ditch noisy edges was to only look in regions
-  ## when the first deriv is < 0 to identify "leading" edges (ones that start
-  ## a peak). The test data was taken from a HITS-CLIP region over Jarid2, ie:
-  r13 <- load.it('/Users/stavros/cBio/data/ClipAtlas/mm9/datasets/2011-11-28-aly/reads.multimap/reads.chr13.+.rda')
-  c13 <- coverage(ranges(r13[strand(r13) == '+']))
-
-  ## Entire 3'UTR is chr13:45,015,335-45,017,012
-  jarid2 <- c13[45015335:45017012]
-
-  ## Some
-  j2 <- jarid2[1005:1310]
-})

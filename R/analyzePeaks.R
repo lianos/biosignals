@@ -1,39 +1,26 @@
 setGeneric("detectPeaksByEdges",
-function(x, bandwidth=40, mu=0, sd=1, threshold=0.15,
-         half.window=ceiling(bandwidth / 2), min.width=10, do.clean=TRUE,
-         ...) {
+function(x, bandwidth=40, mu=0, sd=1, min.height=1L, ...) {
   standardGeneric("detectPeaksByEdges")
 })
 
-.start.end.inorder <- function(starts, ends) {
-  is.start <- c(rep(TRUE, length(starts)), rep(FALSE, length(ends)))
-  check <- is.start[order(c(starts, ends))]
-  all(rle(check)$lengths == 1)
-}
-
-.bad.edge.detection <- function(starts, ends) {
-  length(starts) == 0L || length(starts) != length(ends) ||
-  min(ends) <= min(starts) || max(starts) >= max(ends)
-}
-
 ##' Returns NULL if there was an error
+##'
 setMethod("detectPeaksByEdges", c(x="numeric"),
-function(x, bandwidth, mu, sd, threshold, half.window, min.width, do.clean,
-         .strand='+', min.height=0,
-         ignore.from.start=NULL, ignore.from.end=NULL, ...) {
+function(x, bandwidth, mu, sd, min.height, ignore.from.start=0,
+         ignore.from.end=0, ...) {  
   if (min.height > 0) {
-    peaks <- detectPeaksByEdges(Rle(x), bandwidth, mu, sd, threshold,
-                                half.window, min.width, do.clean, bandwidths,
-                                .strand=.strand, min.height=min.height, ...)
+    peaks <- detectPeaksByEdges(Rle(x), bandwidth, mu, sd,
+                                min.height=min.height,
+                                ignore.from.start=ignore.from.start, ...)
     return(peaks)
   }
 
-  edges <- detectEdges(x, bandwidth=bandwidth[1L], mu=mu, sd=sd,
-                       threshold=threshold, half.window=half.window[1L], ...)
+  edges <- detectEdges(x, bandwidth=bandwidth, mu=mu, sd=sd,
+                       threshold=threshold, ...)
 
-  ## ---------------------------------------------------------------------------
+  ## --------------------------------------------------------------------------
   ## Ensure that no edges are picked up within the "ignore.from.*" bounds.
-  if (is.numeric(ignore.from.start)) {
+  if (is.numeric(ignore.from.start) && ignore.from.start > 0) {
     if (length(edges$start) > 0) {
       edges$start <- edges$start[edges$start >= ignore.from.start]
     }
@@ -42,9 +29,9 @@ function(x, bandwidth, mu, sd, threshold, half.window, min.width, do.clean,
     }
   }
 
-  if (is.numeric(ignore.from.end)) {
+  if (is.numeric(ignore.from.end) && ignore.from.end > 0) {
     if (length(edges$start) > 0) {
-      edges$start <- edges$start[edges$start <= length(x) - ignore.from.end + 1L]
+      edges$start <- edges$start[edges$start <= length(x)-ignore.from.end + 1L]
     }
     if (length(edges$end) > 0) {
       edges$end <- edges$end[edges$end <= length(x) - ignore.from.end + 1L]
@@ -71,14 +58,9 @@ function(x, bandwidth, mu, sd, threshold, half.window, min.width, do.clean,
   ## If edges are out of order (insane for peaks), then try to clean it up
   fishy <- .bad.edge.detection(edges$start, edges$end) ||
     !.start.end.inorder(edges$start, edges$end)
-
-  ## if (do.clean && fishy) {
-  ##   edges <- refineEdges(x, bandwidth, edges$start, edges$end,
-  ##                        half.window=half.window, .strand=.strand, ...)
-  ## }
-
-  if (.bad.edge.detection(edges$start, edges$end) ||
-      !.start.end.inorder(edges$start, edges$end)) {
+  
+  ## TODO: To ignore noise -- add "edge refinement" code here.
+  if (fishy) {
     return(NULL)
   }
 
@@ -93,31 +75,21 @@ function(x, bandwidth, mu, sd, threshold, half.window, min.width, do.clean,
     edges$end[shift.ends] <- edges$end[shift.ends] - 1L
   }
 
-  ir <- IRanges(edges$start, edges$end)
-  values(ir) <- DataFrame(fishy=rep(fishy, length(ir)))
-  if (min.width > 0) {
-    ir <- ir[width(ir) > min.width]
-  }
-  ir
+  IRanges(edges$start, edges$end)
 })
 
 setMethod("detectPeaksByEdges", c(x="Rle"),
-function(x, bandwidth, mu, sd, threshold, half.window, min.width, do.clean,
-         bandwidths, pad.by=1, min.height=0L, .strand='+',
-         smooth.x=TRUE, ...) {
-  # if (smooth.x) {
-  #   xs <- convolve1d(x, kernel='normal', bandwidth=bandwidth, mu=mu, sd=sd)
-  # } else {
-  #   xs <- x
-  # }
-
-  xs <- x
-
-  f <- getMethod('detectPeaksByEdges', 'numeric')
-  islands <- slice(xs, lower=min.height, rangesOnly=TRUE,
+function(x, bandwidth, mu, sd, min.height, pad.by=1L,
+         ignore.from.start=0, ignore.from.end=0,
+         failed.qbounds=c(0.02, 0.98), ...) {
+  if (length(failed.qbounds) != 2 || any(failed.qbounds <= 0) ||
+      any(failed.qbounds >= 1)) {
+    stop("`failed.qbounds` should be vector of length two between (0,1)")
+  }
+  
+  F <- getMethod('detectPeaksByEdges', 'numeric')
+  islands <- slice(x, lower=min.height, rangesOnly=TRUE,
                    includeLower=min.height != 0)
-  islands <- islands[width(islands) >= min.width]
-  nbad <- 0L
 
   edges <- lapply(1:length(islands), function(i) {
     istart <- start(islands[i])
@@ -125,41 +97,118 @@ function(x, bandwidth, mu, sd, threshold, half.window, min.width, do.clean,
     istart.pad <- max((istart - pad.by), 1L)
     iend.pad <- min(iend + pad.by, length(x))
     ix <- as.numeric(x[istart.pad:iend.pad])
-
-    e <- f(ix, bandwidth, mu, sd, threshold, half.window, do.clean=do.clean,
-           bandwidths=bandwidths, .strand=.strand, min.height=0,
-           ignore.from.start=istart - istart.pad,
-           ignore.from.end=iend.pad - iend, ...)
-
-    ## Return a NULL on error/out-of-bounds conditions
-    if (is.null(e)) {
-      nbad <<- nbad + 1L
-      return(NULL)
+    e <- F(ix, bandwidth, mu, sd, min.height=0L,
+           ignore.from.start=istart - istart.pad + ignore.from.start,
+           ignore.from.end=iend.pad - iend - ignore.from.end, ...)
+    ## NULL is returned on error/out-of-bounds conditions, in this case we set
+    ## the "peak" to just be the (trimmed) fenceposts of this "island"
+    if (is.null(e) || length(e) == 0L) {
+      bounds <- quantilePositions(ix, quantile.breaks=failed.qbounds)
+      e <- IRanges(bounds[[1]][1], bounds[[2]][1])
+      values(e) <- DataFrame(fishy=TRUE)
+    } else {
+      values(e) <- DataFrame(fishy=rep(FALSE, length(e)))
     }
-    if (length(e) == 0) {
-      return(NULL)
-    }
-
+    
+    values(e)$multi.modal <- rep(length(e) > 1, length(e))
+    values(e)$island.idx <- i
+    
     ## Shift the edge calls back as far as we padded ix from its start
     ## and up into the correct region of x
-    e <- shift(e, istart.pad - istart + (istart - 1L))
-    values(e)$multi.modal <- rep(length(e) > 1, length(e))
-    e
+    shift(e, istart.pad - istart + (istart - 1L))
   })
 
-  if (nbad > 0) {
-    message("couldn't locate peaks in ", nbad, " islands\n")
-  }
-  browser()
   edges <- do.call(c, unname(edges[!sapply(edges, is.null)]))
-  if (!is.null(edges) && length(edges) > 0) {
-    edges <- edges[width(edges) >= min.width]
-  }
   edges
 })
 
-## Checks to see that bandwidth and window.size vectors are kosher and
-## returuns them in decreasing order
+##' Attempts to remove "noisy" peaks.
+##' 
+##' @param x The numeric vector used to call peaks from
+##' @param edges The IRanges object which identifies the start/end edges
+##' of a peak.
+##' @param peak.threshold The fraction that the minimum y-value at
+##' either end of the peak must be less than in order for the peak
+##' to be considered "real"
+##' @param threshold.maxs Leave this NULL if each peak's height with respect
+##' to its minima (foudn at the edges) should be evaluated by themselves.
+##' Pass in a number to use a a more "global" maximum for each peak maximum
+##' to be compared to.
+filterPeaks <- function(x, edges, min.height=1L, peak.threshold=0.75,
+                        edge.window=5L, threshold.maxs=NULL) {
+  if (edge.window < 1) {
+    stop("edge.window must be non-negative")
+  }
+  edge.window <- as.integer(ceiling(edge.window))
+  
+  if (!(is.integer(as.vector(x[1L])))) {
+    stop("An integer-type of vector is required (vector or Rle)")
+  }
+  if (any(start(ranges) < 1 | end(ranges) > length(x))) {
+    stop("Illegal start/end values in `edges` IRanges object")
+  }
+  if (peak.threshold < 0 || peak.threshold > 1) {
+    stop("peak.threshold must be numeric in [0,1] range")
+  }
+  if (peak.threshold == 0) {
+    return(IRanges())
+  }
+  if (peak.threshold == 1) {
+    return(edges)
+  }
+  
+  views <- Views(x, edges)
+  maxs <- viewMaxs(views)
+  keep.height <- maxs >= min.height
+  
+  edges <- edges[keep.height]
+  maxs <- maxs[keep.height]
+
+  if (is.null(threshold.maxs)) {
+    start.window <- IRanges(start(edges) - edge.window + 1L, width=edge.window)
+    end(start.window) <- pmax(1L, end(start.window))
+    start(start.window) <- pmax(1L, start(start.window))
+    val.start <- viewMins(Views(x, start.window))
+
+    end.window <- IRanges(end(edges) + edge.window - 1L, width=edge.window)
+    start(end.window) <- pmin(length(x), start(end.window))
+    end(end.window) <- pmin(length(x), end(end.window))
+    val.end <- viewMins(Views(x, end.window))
+
+    edge.min <- pmin(val.start, val.end)
+    keep <- (edge.min + 0.5 / maxs) <= peak.threshold & maxs > 0
+  } else {
+    ## ??
+    keep <- maxs / threshold.maxs <= peak.threshold & maxs > 0
+  }
+
+
+  edges[keep]
+}
+
+###############################################################################
+## Helper functions to check that peak calling works
+## ----------------------------------------------------------------------------
+.start.end.inorder <- function(starts, ends) {
+  is.start <- c(rep(TRUE, length(starts)), rep(FALSE, length(ends)))
+  check <- is.start[order(c(starts, ends))]
+  all(rle(check)$lengths == 1)
+}
+
+.bad.edge.detection <- function(starts, ends) {
+  length(starts) == 0L || length(starts) != length(ends) ||
+  min(ends) <= min(starts) || max(starts) >= max(ends)
+}
+
+###############################################################################
+## Sidlined utility functions that were used for an elementary effort of doing
+## adaptive bandwidth selection in local "coverage islands". There is some
+## real literature out there that talks about this, so use some of those
+## methods instead.
+
+## This is a utility function used for "adaptive bandwidth" hunting.
+## 
+## This functionality is temporarily removed until I can smoke it out better
 validateBandwidthAndWindows <- function(bandwidth, window.size) {
   if (length(bandwidth) < 1) {
     stop("bandwidth required")
@@ -192,12 +241,11 @@ validateBandwidthAndWindows <- function(bandwidth, window.size) {
   list(bandwidth=bandwidth, window.size=window.size)
 }
 
-## TODO: We are currently assuming the edge calling in local "ilsands"
-##       so if the start,edge order looks wonky, we just take min/max
-##       Make this a smarter "refining" of mixed start/edge pairs!
-##       Make take the steeper of the two edges (or something)
-
 ##' Refines the edge calls in pre-specified regions of x.
+##' 
+##' This function is used during "adaptive bandwidth" hunting in local
+##' coverage islands -- this functionality is temporarily removed until
+##' I can implement it better.
 ##'
 ##' @param x The coverage vector.
 ##' @param bandwidth Bandwidth of the kernel
