@@ -81,14 +81,21 @@ function(x, bandwidth, mu, sd, min.height, ignore.from.start=0,
 setMethod("detectPeaksByEdges", c(x="Rle"),
 function(x, bandwidth, mu, sd, min.height, pad.by=1L,
          ignore.from.start=0, ignore.from.end=0,
-         failed.qbounds=c(0.02, 0.98), ...) {
+         failed.qbounds=c(0.02, 0.98), smooth.slice=FALSE, ...) {
   if (length(failed.qbounds) != 2 || any(failed.qbounds <= 0) ||
       any(failed.qbounds >= 1)) {
     stop("`failed.qbounds` should be vector of length two between (0,1)")
   }
-  
+
   F <- getMethod('detectPeaksByEdges', 'numeric')
-  islands <- slice(x, lower=min.height, rangesOnly=TRUE,
+  
+  if (smooth.slice) {
+    xs <- convolve1d(x, 'normal', bandwidth=bandwidth, mu=mu, sd=sd)
+  } else {
+    xs <- x
+  }
+
+  islands <- slice(xs, lower=min.height, rangesOnly=TRUE,
                    includeLower=min.height != 0)
 
   edges <- lapply(1:length(islands), function(i) {
