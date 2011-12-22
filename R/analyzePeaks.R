@@ -7,7 +7,7 @@ function(x, bandwidth=40, mu=0, sd=1, min.height=1L, ...) {
 ##'
 setMethod("detectPeaksByEdges", c(x="numeric"),
 function(x, bandwidth, mu, sd, min.height, ignore.from.start=0,
-         ignore.from.end=0, ...) {  
+         ignore.from.end=0, ...) {
   if (min.height > 0) {
     peaks <- detectPeaksByEdges(Rle(x), bandwidth, mu, sd,
                                 min.height=min.height,
@@ -58,7 +58,7 @@ function(x, bandwidth, mu, sd, min.height, ignore.from.start=0,
   ## If edges are out of order (insane for peaks), then try to clean it up
   fishy <- .bad.edge.detection(edges$start, edges$end) ||
     !.start.end.inorder(edges$start, edges$end)
-  
+
   ## TODO: To ignore noise -- add "edge refinement" code here.
   if (fishy) {
     return(NULL)
@@ -88,15 +88,28 @@ function(x, bandwidth, mu, sd, min.height, pad.by=1L,
   }
 
   F <- getMethod('detectPeaksByEdges', 'numeric')
-  
-  if (smooth.slice) {
-    xs <- convolve1d(x, 'normal', bandwidth=bandwidth, mu=mu, sd=sd)
-  } else {
-    xs <- x
-  }
 
-  islands <- slice(xs, lower=min.height, rangesOnly=TRUE,
+  ## if (smooth.slice) {
+  ##   xs <- convolve1d(x, 'normal', bandwidth=bandwidth, mu=mu, sd=sd)
+  ## } else {
+  ##   xs <- x
+  ## }
+  ##
+  ## islands <- slice(xs, lower=min.height, rangesOnly=TRUE,
+  ##                  includeLower=min.height != 0)
+
+  islands <- slice(x, lower=min.height, rangesOnly=TRUE,
                    includeLower=min.height != 0)
+  if (smooth.slice) {
+    i <- slice(x, lower=2L, rangesOnly=TRUE)
+
+    pre <- IRanges(-bandwidth, 0)
+    post <- IRanges(length(x) + 1L, width=bandwidth)
+    g <- reduce(c(pre, gaps(c(pre, i, post)), post))
+
+    expanded <- setdiff(reduce(islands + floor(bandwidth / 2)), g)
+    islands <- subsetByOverlaps(expanded, islands)
+  }
 
   edges <- lapply(1:length(islands), function(i) {
     istart <- start(islands[i])
@@ -116,10 +129,10 @@ function(x, bandwidth, mu, sd, min.height, pad.by=1L,
     } else {
       values(e) <- DataFrame(fishy=rep(FALSE, length(e)))
     }
-    
+
     values(e)$multi.modal <- rep(length(e) > 1, length(e))
     values(e)$island.idx <- i
-    
+
     ## Shift the edge calls back as far as we padded ix from its start
     ## and up into the correct region of x
     shift(e, istart.pad - istart + (istart - 1L))
@@ -130,7 +143,7 @@ function(x, bandwidth, mu, sd, min.height, pad.by=1L,
 })
 
 ##' Attempts to remove "noisy" peaks.
-##' 
+##'
 ##' @param x The numeric vector used to call peaks from
 ##' @param edges The IRanges object which identifies the start/end edges
 ##' of a peak.
@@ -144,12 +157,12 @@ function(x, bandwidth, mu, sd, min.height, pad.by=1L,
 filterPeaks <- function(x, edges, min.height=1L, peak.threshold=0.75,
                         edge.window=5L, threshold.maxs=NULL) {
   stop("This isn't working yet -- jump to the DEBUG/threshold stuff")
-  
+
   if (edge.window < 1) {
     stop("edge.window must be non-negative")
   }
   edge.window <- as.integer(ceiling(edge.window))
-  
+
   if (!(is.integer(as.vector(x[1L])))) {
     stop("An integer-type of vector is required (vector or Rle)")
   }
@@ -165,14 +178,14 @@ filterPeaks <- function(x, edges, min.height=1L, peak.threshold=0.75,
   if (peak.threshold == 1) {
     return(edges)
   }
-  
+
   views <- Views(x, edges)
   maxs <- viewMaxs(views)
   keep.height <- maxs >= min.height
-  
+
   edges <- edges[keep.height]
   maxs <- maxs[keep.height]
-  
+
   ## DEBUG: This thresholding code is not correct
   if (is.null(threshold.maxs)) {
     start.window <- IRanges(start(edges) - edge.window + 1L, width=edge.window)
@@ -217,7 +230,7 @@ filterPeaks <- function(x, edges, min.height=1L, peak.threshold=0.75,
 ## methods instead.
 
 ## This is a utility function used for "adaptive bandwidth" hunting.
-## 
+##
 ## This functionality is temporarily removed until I can smoke it out better
 validateBandwidthAndWindows <- function(bandwidth, window.size) {
   if (length(bandwidth) < 1) {
@@ -252,7 +265,7 @@ validateBandwidthAndWindows <- function(bandwidth, window.size) {
 }
 
 ##' Refines the edge calls in pre-specified regions of x.
-##' 
+##'
 ##' This function is used during "adaptive bandwidth" hunting in local
 ##' coverage islands -- this functionality is temporarily removed until
 ##' I can implement it better.

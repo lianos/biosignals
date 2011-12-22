@@ -15,7 +15,7 @@ test_that("double starts (ends) are refined reasonably in a local peak", {
             5,    3,    2,    2,    1,    1,    1,    1,    1)
   de <- detectPeaksByEdges(x, bandwidth=36, ignore.from.start=5)
   expect_is(de, 'IRanges')
-  
+
   ## This test was for noise filtering, which has been removed. The 'no-filter'
   ## code will find 2 (UGLY) peaks here
   expect_equal(length(de), 2, info="check `ignore.from.start`")
@@ -36,3 +36,16 @@ test_that("signals do not cause IRanges with negative widths", {
   expect_true(width(de)[1] > 35 && width(de)[1] < 42)
 })
 
+## When calling peaks, using a "straight" slice may split an "island" into two
+## if there is a sharp local dip (likely due to some artifact). Look at region
+## between x[200:250] when min.height=10
+test_that("min.height is not sensitive to local dips", {
+  x <- new("Rle", elementMetadata=NULL, metadata=list(),
+           values=c(0L, 1L, 2L, 3L, 4L, 5L, 6L, 4L, 3L, 0L, 1L, 2L, 0L, 1L, 2L,
+             3L, 4L, 5L, 7L, 8L, 9L, 10L, 11L, 8L, 9L, 10L, 12L, 13L, 8L,
+             7L, 4L, 3L, 1L, 0L),
+           lengths=c(25L, 12L, 8L, 7L, 3L, 8L, 15L, 7L, 2L, 12L, 1L, 28L, 43L,
+             9L, 3L, 18L, 7L, 1L, 3L, 2L, 4L, 2L, 1L, 1L, 2L, 1L, 2L, 12L, 4L,
+             2L, 8L, 3L, 3L, 23L))
+
+})
