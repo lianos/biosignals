@@ -78,6 +78,16 @@ function(x, bandwidth, mu, sd, min.height, ignore.from.start=0,
   IRanges(edges$start, edges$end)
 })
 
+
+## smooth.slice tries to avoid the following situation where we call
+## two peaks where one should be:
+##
+##          /
+##      .  /|
+## ----/|-/ |------    [ <- min.height line ]
+##    . |/  |
+##   /      |
+##
 setMethod("detectPeaksByEdges", c(x="Rle"),
 function(x, bandwidth, mu, sd, min.height, pad.by=1L,
          ignore.from.start=0, ignore.from.end=0,
@@ -88,6 +98,10 @@ function(x, bandwidth, mu, sd, min.height, pad.by=1L,
   }
 
   F <- getMethod('detectPeaksByEdges', 'numeric')
+
+  ##############################################################################
+  ## TODO: Compare slice method with full convolution when smooth.slice=TRUE
+  ## ---------------------------------------------------------------------------
 
   ## if (smooth.slice) {
   ##   xs <- convolve1d(x, 'normal', bandwidth=bandwidth, mu=mu, sd=sd)
@@ -100,14 +114,19 @@ function(x, bandwidth, mu, sd, min.height, pad.by=1L,
 
   islands <- slice(x, lower=min.height, rangesOnly=TRUE,
                    includeLower=min.height != 0)
+  ## DEBUG: A call to setdiff,c(IRanges,IRanges) is dispatching to base::setdiff
+  sdiff <- getMethod("setdiff", c("IRanges", "IRanges"))
   if (smooth.slice) {
     i <- slice(x, lower=2L, rangesOnly=TRUE)
 
-    pre <- IRanges(-bandwidth, 0)
+    pre <- IRanges(0, 0)
     post <- IRanges(length(x) + 1L, width=bandwidth)
     g <- reduce(c(pre, gaps(c(pre, i, post)), post))
 
-    expanded <- setdiff(reduce(islands + floor(bandwidth / 2)), g)
+    expanded <- reduce(islands + as.integer(floor(bandwidth / 2)))
+    start(expanded) <- pmax(start(expanded), 1L)
+    expanded <- sdiff(expanded, g)
+
     islands <- subsetByOverlaps(expanded, islands)
   }
 
