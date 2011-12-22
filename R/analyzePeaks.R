@@ -8,7 +8,7 @@ function(x, bandwidth=40, mu=0, sd=1, min.height=1L, ...) {
 setMethod("detectPeaksByEdges", c(x="numeric"),
 function(x, bandwidth, mu, sd, min.height, ignore.from.start=0,
          ignore.from.end=0, ...) {
-  if (min.height > 0) {
+  if (is.numeric(min.height) && min.height > 0) {
     peaks <- detectPeaksByEdges(Rle(x), bandwidth, mu, sd,
                                 min.height=min.height,
                                 ignore.from.start=ignore.from.start, ...)
@@ -97,53 +97,71 @@ function(x, bandwidth, mu, sd, min.height, pad.by=1L,
     stop("`failed.qbounds` should be vector of length two between (0,1)")
   }
 
+  bandwidth <- as.integer(bandwidth)[1L]
+  min.height <- as.integer(max(1L, min.height))
   F <- getMethod('detectPeaksByEdges', 'numeric')
 
   ##############################################################################
-  ## TODO: Compare slice method with full convolution when smooth.slice=TRUE
+  ## smooth.slice by smoothing the entire signal
   ## ---------------------------------------------------------------------------
-
   ## if (smooth.slice) {
   ##   xs <- convolve1d(x, 'normal', bandwidth=bandwidth, mu=mu, sd=sd)
   ## } else {
   ##   xs <- x
   ## }
   ##
-  ## islands <- slice(xs, lower=min.height, rangesOnly=TRUE,
-  ##                  includeLower=min.height != 0)
+  ## islands <- slice(xs, lower=min.height, rangesOnly=TRUE)
 
-  islands <- slice(x, lower=min.height, rangesOnly=TRUE,
-                   includeLower=min.height != 0)
+  ##############################################################################
+  ## smooth.sclie by merging a slice of lower height w/ the original target
+  ## min.height
   ## DEBUG: A call to setdiff,c(IRanges,IRanges) is dispatching to base::setdiff
-  sdiff <- getMethod("setdiff", c("IRanges", "IRanges"))
-  if (smooth.slice) {
-    i <- slice(x, lower=2L, rangesOnly=TRUE)
+  ## ---------------------------------------------------------------------------
+  ## islands <- slice(x, lower=min.height, rangesOnly=TRUE)
+  ##
+  ## sdiff <- getMethod("setdiff", c("IRanges", "IRanges"))
+  ## if (smooth.slice) {
+  ##   i <- slice(x, lower=2L, rangesOnly=TRUE)
+  ##
+  ##   pre <- IRanges(0, 0)
+  ##   post <- IRanges(length(x) + 1L, width=bandwidth)
+  ##   g <- reduce(c(pre, gaps(c(pre, i, post)), post))
+  ##
+  ##   expanded <- reduce(islands + as.integer(floor(bandwidth / 2)))
+  ##   start(expanded) <- pmax(start(expanded), 1L)
+  ##   expanded <- sdiff(expanded, g)
+  ##
+  ##   islands <- subsetByOverlaps(expanded, islands)
+  ## }
 
-    pre <- IRanges(0, 0)
-    post <- IRanges(length(x) + 1L, width=bandwidth)
-    g <- reduce(c(pre, gaps(c(pre, i, post)), post))
-
-    expanded <- reduce(islands + as.integer(floor(bandwidth / 2)))
-    start(expanded) <- pmax(start(expanded), 1L)
-    expanded <- sdiff(expanded, g)
-
-    islands <- subsetByOverlaps(expanded, islands)
-  }
+  islands <- slice(x, lower=min.height, rangesOnly=TRUE)
 
   edges <- lapply(1:length(islands), function(i) {
+    ## istart <- start(islands[i])
+    ## iend <- end(islands[i])
+    ## istart.pad <- max((istart - pad.by), 1L)
+    ## iend.pad <- min(iend + pad.by, length(x))
+    ## ix <- as.numeric(x[istart.pad:iend.pad])
+    ## e <- F(ix, bandwidth, mu, sd, min.height=0L,
+    ##        ignore.from.start=istart - istart.pad + ignore.from.start,
+    ##        ignore.from.end=iend.pad - iend - ignore.from.end, ...)
     istart <- start(islands[i])
     iend <- end(islands[i])
-    istart.pad <- max((istart - pad.by), 1L)
-    iend.pad <- min(iend + pad.by, length(x))
-    ix <- as.numeric(x[istart.pad:iend.pad])
-    e <- F(ix, bandwidth, mu, sd, min.height=0L,
-           ignore.from.start=istart - istart.pad + ignore.from.start,
-           ignore.from.end=iend.pad - iend - ignore.from.end, ...)
+    ix <- as.numeric(x[istart:iend])
+
+    qpos <- quantilePositions(ix, quantile.breaks=c(.05, .95))
+    qstart <- qpos[[1L]][1L]
+    qend <- qpos[[2L]][1L]
+    qx <- ix[qstart:qend]
+
+    xx <- c(rep(qx[1L], bandwidth), qx, rep(qx[length(qx)], bandwidth))
+    e <- F(xx, bandwidth, mu, sd, min.height=0L,
+           ignore.from.start=bandwidth, ignore.from.end=bandwidth, ...)
+
     ## NULL is returned on error/out-of-bounds conditions, in this case we set
     ## the "peak" to just be the (trimmed) fenceposts of this "island"
     if (is.null(e) || length(e) == 0L) {
-      bounds <- quantilePositions(ix, quantile.breaks=failed.qbounds)
-      e <- IRanges(bounds[[1]][1], bounds[[2]][1])
+      e <- IRanges(qstart, qend)
       values(e) <- DataFrame(fishy=TRUE)
     } else {
       values(e) <- DataFrame(fishy=rep(FALSE, length(e)))
@@ -154,7 +172,8 @@ function(x, bandwidth, mu, sd, min.height, pad.by=1L,
 
     ## Shift the edge calls back as far as we padded ix from its start
     ## and up into the correct region of x
-    shift(e, istart.pad - istart + (istart - 1L))
+    ## shift(e, istart.pad - istart + (istart - 1L))
+    shift(e, (qstart + istart - bandwidth + 1L))
   })
 
   edges <- do.call(c, unname(edges[!sapply(edges, is.null)]))

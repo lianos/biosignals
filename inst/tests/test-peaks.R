@@ -42,10 +42,51 @@ test_that("signals do not cause IRanges with negative widths", {
 test_that("min.height is not sensitive to local dips", {
   x <- new("Rle", elementMetadata=NULL, metadata=list(),
            values=c(0L, 1L, 2L, 3L, 4L, 5L, 6L, 4L, 3L, 0L, 1L, 2L, 0L, 1L, 2L,
-             3L, 4L, 5L, 7L, 8L, 9L, 10L, 11L, 8L, 9L, 10L, 12L, 13L, 8L,
-             7L, 4L, 3L, 1L, 0L),
+             3L, 4L, 5L, 7L, 8L, 9L, 10L, 11L, 8L, 9L, 10L, 12L, 13L, 8L, 7L,
+             4L, 3L, 1L, 0L),
            lengths=c(25L, 12L, 8L, 7L, 3L, 8L, 15L, 7L, 2L, 12L, 1L, 28L, 43L,
              9L, 3L, 18L, 7L, 1L, 3L, 2L, 4L, 2L, 1L, 1L, 2L, 1L, 2L, 12L, 4L,
              2L, 8L, 3L, 3L, 23L))
-
 })
+
+## Comparing detctPeaksByEdges when smooth.slice is implemented by
+## convolution, or by the slice/slice trick
+if (FALSE) {
+  ddir <- dirname(system.file('tests', 'test-peaks.R', package='biosignals'))
+  ddir <- file.path(ddir, 'data')
+  ddir <- '~/cBio/projects/biosignals/biosignals-pkg/inst/tests/data'
+
+  cvr <- readRDS(file.path(ddir, 'coverage-raw.rds'))
+  cvs <- readRDS(file.path(ddir, 'coverage-smooth-bwdth50.rds'))
+
+  ## Peaks called when smooth.slice is the slice/slice trick
+  ps <- readRDS(file.path(ddir, 'peaks.convolve.smooth.slice.minheight-10.rds'))
+  vs <- Views(cvr, ranges(ps))
+  sm <- viewMaxs(vs)
+  values(ps)$max <- sm
+  ps.clean <- ps[sm > 10]
+  psdf <- as.data.frame(ps.clean)
+
+  ## Peaks called when smooth.slice first convolves the entire signal, and
+  ## min.height=1
+  pc <- readRDS(file.path(ddir, 'peaks.convolve.smooth.slice.cnv-50.rds'))
+  vc <- Views(cvr, ranges(pc))
+  cm <- viewMaxs(vc)
+  values(pc)$max <- cm
+
+  pc.clean <- pc[cm > 10]
+  pcdf <- as.data.frame(pc.clean)
+  cislands <- slice(cvs, lower=1, rangesOnly=TRUE)
+}
+
+if (FALSE) {
+  ##
+  ##    ---------   ----------
+  ##  -----------------------------
+  ##
+  ##    ----------------------
+  ## Want 3:17
+  ir1 <- IRanges(c(3, 10), width=8)
+  ir2 <- IRanges(1, 20)
+
+}
