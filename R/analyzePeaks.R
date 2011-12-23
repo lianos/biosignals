@@ -154,7 +154,7 @@ function(x, bandwidth, mu, sd, min.height, pad.by=1L,
     qend <- qpos[[2L]][1L]
     qx <- ix[qstart:qend]
 
-    xx <- c(rep(qx[0L], bandwidth), qx, rep(0L, bandwidth))
+    xx <- c(rep(0L, bandwidth), qx, rep(0L, bandwidth))
     e <- F(xx, bandwidth, mu, sd, min.height=0L,
            ignore.from.start=bandwidth, ignore.from.end=bandwidth, ...)
 
