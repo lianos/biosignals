@@ -164,6 +164,7 @@ function(x, bandwidth, mu, sd, min.height, pad.by=1L,
       e <- IRanges(qstart, qend)
       values(e) <- DataFrame(fishy=TRUE)
     } else {
+      e <- shift(e, -bandwidth + qstart)
       values(e) <- DataFrame(fishy=rep(FALSE, length(e)))
     }
 
@@ -173,7 +174,7 @@ function(x, bandwidth, mu, sd, min.height, pad.by=1L,
     ## Shift the edge calls back as far as we padded ix from its start
     ## and up into the correct region of x
     ## shift(e, istart.pad - istart + (istart - 1L))
-    shift(e, (qstart + istart - bandwidth + 1L))
+    shift(e, istart - 1L)
   })
 
   edges <- do.call(c, unname(edges[!sapply(edges, is.null)]))
