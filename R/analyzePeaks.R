@@ -156,7 +156,8 @@ function(x, bandwidth, mu, sd, min.height, pad.by=1L,
 
     xx <- c(rep(0L, bandwidth), qx, rep(0L, bandwidth))
     e <- F(xx, bandwidth, mu, sd, min.height=0L,
-           ignore.from.start=bandwidth, ignore.from.end=bandwidth, ...)
+           ignore.from.start=max(bandwidth - qstart, 0L),
+           ignore.from.end=max(bandwidth - length(ix) + qend, 0L), ...)
 
     ## NULL is returned on error/out-of-bounds conditions, in this case we set
     ## the "peak" to just be the (trimmed) fenceposts of this "island"
