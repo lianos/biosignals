@@ -1,13 +1,13 @@
 setGeneric("detectPeaksByEdges",
-function(x, bandwidth=40, mu=0, sd=1, min.height=1L, ...) {
+function(x, bandwidth=35, mu=0, sd=1, min.height=1L, ...) {
   standardGeneric("detectPeaksByEdges")
 })
 
 ##' Returns NULL if there was an error
 ##'
 setMethod("detectPeaksByEdges", c(x="numeric"),
-function(x, bandwidth, mu, sd, min.height, ignore.from.start=0,
-         ignore.from.end=0, ...) {
+function(x, bandwidth, mu, sd, min.height, ignore.from.start=0L,
+         ignore.from.end=0L, ...) {
   if (is.numeric(min.height) && min.height > 0) {
     peaks <- detectPeaksByEdges(Rle(x), bandwidth, mu, sd,
                                 min.height=min.height,
@@ -79,7 +79,8 @@ function(x, bandwidth, mu, sd, min.height, ignore.from.start=0,
 })
 
 
-## smooth.slice tries to avoid the following situation where we call
+## For smooth.slice code, see commits between [Dec 21, Dec 23]
+## smooth.slice tries (tired) to avoid the following situation where we call
 ## two peaks where one should be:
 ##
 ##          /
@@ -89,70 +90,35 @@ function(x, bandwidth, mu, sd, min.height, ignore.from.start=0,
 ##   /      |
 ##
 setMethod("detectPeaksByEdges", c(x="Rle"),
-function(x, bandwidth, mu, sd, min.height, pad.by=1L,
-         ignore.from.start=0, ignore.from.end=0,
-         failed.qbounds=c(0.02, 0.98), smooth.slice=FALSE, ...) {
-  if (length(failed.qbounds) != 2 || any(failed.qbounds <= 0) ||
-      any(failed.qbounds >= 1)) {
-    stop("`failed.qbounds` should be vector of length two between (0,1)")
+function(x, bandwidth, mu, sd, min.height, trim=c(0.05, 0.95),
+         ignore.from.start=0L, ignore.from.end=0L, ...) {
+  if (is.numeric(trim)) {
+    if (length(trim) != 2 || any(trim <= 0) || any(trim >= 1)) {
+      stop("`trim` should be vector of length two between (0,1)")
+    }
   }
 
   bandwidth <- as.integer(bandwidth)[1L]
   min.height <- as.integer(max(1L, min.height))
   F <- getMethod('detectPeaksByEdges', 'numeric')
 
-  ##############################################################################
-  ## smooth.slice by smoothing the entire signal
-  ## ---------------------------------------------------------------------------
-  ## if (smooth.slice) {
-  ##   xs <- convolve1d(x, 'normal', bandwidth=bandwidth, mu=mu, sd=sd)
-  ## } else {
-  ##   xs <- x
-  ## }
-  ##
-  ## islands <- slice(xs, lower=min.height, rangesOnly=TRUE)
-
-  ##############################################################################
-  ## smooth.sclie by merging a slice of lower height w/ the original target
-  ## min.height
-  ## DEBUG: A call to setdiff,c(IRanges,IRanges) is dispatching to base::setdiff
-  ## ---------------------------------------------------------------------------
-  ## islands <- slice(x, lower=min.height, rangesOnly=TRUE)
-  ##
-  ## sdiff <- getMethod("setdiff", c("IRanges", "IRanges"))
-  ## if (smooth.slice) {
-  ##   i <- slice(x, lower=2L, rangesOnly=TRUE)
-  ##
-  ##   pre <- IRanges(0, 0)
-  ##   post <- IRanges(length(x) + 1L, width=bandwidth)
-  ##   g <- reduce(c(pre, gaps(c(pre, i, post)), post))
-  ##
-  ##   expanded <- reduce(islands + as.integer(floor(bandwidth / 2)))
-  ##   start(expanded) <- pmax(start(expanded), 1L)
-  ##   expanded <- sdiff(expanded, g)
-  ##
-  ##   islands <- subsetByOverlaps(expanded, islands)
-  ## }
-
   islands <- slice(x, lower=min.height, rangesOnly=TRUE)
 
   edges <- lapply(1:length(islands), function(i) {
-    ## istart <- start(islands[i])
-    ## iend <- end(islands[i])
-    ## istart.pad <- max((istart - pad.by), 1L)
-    ## iend.pad <- min(iend + pad.by, length(x))
-    ## ix <- as.numeric(x[istart.pad:iend.pad])
-    ## e <- F(ix, bandwidth, mu, sd, min.height=0L,
-    ##        ignore.from.start=istart - istart.pad + ignore.from.start,
-    ##        ignore.from.end=iend.pad - iend - ignore.from.end, ...)
     istart <- start(islands[i])
     iend <- end(islands[i])
     ix <- as.numeric(x[istart:iend])
 
-    qpos <- quantilePositions(ix, quantile.breaks=c(.05, .95))
-    qstart <- qpos[[1L]][1L]
-    qend <- qpos[[2L]][1L]
-    qx <- ix[qstart:qend]
+    if (is.numeric(trim)) {
+      qpos <- quantilePositions(ix, quantile.breaks=trim)
+      qstart <- qpos[[1L]][1L]
+      qend <- qpos[[2L]][1L]
+      qx <- ix[qstart:qend]
+    } else {
+      qstart <- 1L
+      qend <- length(ix)
+      qx <- ix
+    }
 
     xx <- c(rep(0L, bandwidth), qx, rep(0L, bandwidth))
     e <- F(xx, bandwidth, mu, sd, min.height=0L,
@@ -172,9 +138,7 @@ function(x, bandwidth, mu, sd, min.height, pad.by=1L,
     values(e)$multi.modal <- rep(length(e) > 1, length(e))
     values(e)$island.idx <- i
 
-    ## Shift the edge calls back as far as we padded ix from its start
-    ## and up into the correct region of x
-    ## shift(e, istart.pad - istart + (istart - 1L))
+    ## Shift the edge calls up into the correct region of x
     shift(e, istart - 1L)
   })
 
@@ -182,7 +146,7 @@ function(x, bandwidth, mu, sd, min.height, pad.by=1L,
   edges
 })
 
-##' Attempts to remove "noisy" peaks.
+##' Attempts to remove "noisy" peaks [NOT USED]
 ##'
 ##' @param x The numeric vector used to call peaks from
 ##' @param edges The IRanges object which identifies the start/end edges
