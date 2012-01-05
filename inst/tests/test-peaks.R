@@ -54,6 +54,7 @@ test_that("min.height is not sensitive to local dips", {
 if (FALSE) {
   ddir <- dirname(system.file('tests', 'test-peaks.R', package='biosignals'))
   ddir <- file.path(ddir, 'data')
+
   ddir <- '~/cBio/projects/biosignals/biosignals-pkg/inst/tests/data'
 
   cvr <- readRDS(file.path(ddir, 'coverage-raw.rds'))
@@ -80,13 +81,11 @@ if (FALSE) {
 }
 
 if (FALSE) {
-  ##
-  ##    ---------   ----------
-  ##  -----------------------------
-  ##
-  ##    ----------------------
-  ## Want 3:17
-  ir1 <- IRanges(c(3, 10), width=8)
-  ir2 <- IRanges(1, 20)
-
+  p13 <- readRDS('/Users/stavros/cBio/data/ApaAtlas/hg19/datasets/2011-12-21/event.info.multimap/peak.info.chr13.+.rds')
+  r13 <- load.it('/Users/stavros/cBio/data/ApaAtlas/hg19/datasets/2011-12-21/reads.multimap/reads.chr13.+.rda')
+  c13 <- coverage(ranges(r13))
+  min.height <- 5
+  x <- c13
+  islands <- slice(x, lower=min.height, rangesOnly=TRUE)
+  i <- 319
 }
