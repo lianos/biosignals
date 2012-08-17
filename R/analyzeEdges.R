@@ -24,8 +24,9 @@ detectEdges <- function(x, bandwidth=10, mu=0, sd=1, threshold=0.15,
   ##       an idea about the direction to go in.
   k1 <- generateKernel('gaussian', bandwidth=bandwidth, mu=mu, sd=sd, deriv=1)
   k2 <- generateKernel('gaussian', bandwidth=bandwidth, mu=mu, sd=sd, deriv=2)
-
-  x1 <- convolve1d(x, k1) ## first derivative of data
+  
+  ## First derivatve not necessary if no noise-filtering is done
+  ## x1 <- convolve1d(x, k1) ## first derivative of data
   x2 <- convolve1d(x, k2) ## locates peak of first deriv when this crosses 0
 
   ## Locations where second derivative cross 0 are the potential regions
