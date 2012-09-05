@@ -13,7 +13,7 @@ DEFINES = -DR_LIBRARY
 	@echo "===================================================================="
 	@echo "Compiling biosignals library"
 	@echo "===================================================================="
-	find ../inst/include/biosignals -name "*.cpp" -exec $(CXX) -MM $(DEFINES) $(PKG_CXXFLAGS) {} -MT {}.o \; >.depend
+	find ../inst/include/biosignals -name "*.cpp" -exec $(CXX) -MM $(DEFINES) $(ALL_CPPFLAGS) $(PKG_CXXFLAGS) {} -MT {}.o \; >.depend
 	find . -name "*.cpp" -exec $(CXX) -MM $(DEFINES) $(PKG_CXXFLAGS) {} -MT {}.o \; >>.depend
 
 include .depend

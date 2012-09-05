@@ -22,7 +22,7 @@ detectEdges <- function(x, bandwidth=10, mu=0, sd=1, threshold=0.15,
   ## NOTE: The original noise-cleaning code was moved out and stored in
   ##       the `with-original-noise-fiter` branch. cf. `localExtrema.R` to get
   ##       an idea about the direction to go in.
-  k1 <- generateKernel('gaussian', bandwidth=bandwidth, mu=mu, sd=sd, deriv=1)
+  ## k1 <- generateKernel('gaussian', bandwidth=bandwidth, mu=mu, sd=sd, deriv=1)
   k2 <- generateKernel('gaussian', bandwidth=bandwidth, mu=mu, sd=sd, deriv=2)
   
   ## First derivatve not necessary if no noise-filtering is done
