@@ -29,6 +29,7 @@ function(x, bandwidth, mu, sd, min.height, ignore.from.start=0L,
     }
   }
 
+
   if (is.numeric(ignore.from.end) && ignore.from.end > 0) {
     if (length(edges$start) > 0) {
       edges$start <- edges$start[edges$start <= length(x)-ignore.from.end + 1L]
@@ -63,7 +64,7 @@ function(x, bandwidth, mu, sd, min.height, ignore.from.start=0L,
   if (fishy) {
     return(NULL)
   }
-
+  
   ## Make edges start at non-zero positions
   shift.starts <- x[edges$start] == 0 & x[edges$start + 1L] > 0L
   if (any(shift.starts)) {
@@ -107,6 +108,7 @@ function(x, bandwidth, mu, sd, min.height, trim=c(0.05, 0.95),
   edges <- lapply(1:length(islands), function(i) {
     istart <- start(islands[i])
     iend <- end(islands[i])
+    iwidth <- iend - istart + 1L
     ix <- as.numeric(x[istart:iend])
 
     if (is.numeric(trim)) {
@@ -122,14 +124,21 @@ function(x, bandwidth, mu, sd, min.height, trim=c(0.05, 0.95),
 
     xx <- c(rep(0L, bandwidth), qx, rep(0L, bandwidth))
     e <- F(xx, bandwidth, mu, sd, min.height=0L,
-           ignore.from.start=max(bandwidth - qstart, 0L),
-           ignore.from.end=max(bandwidth - length(ix) + qend, 0L), ...)
+           ignore.from.start=max(bandwidth - qstart, 0L, ignore.from.start),
+           ignore.from.end=max(bandwidth - length(ix) + qend, 0L, ignore.from.end), ...)
 
     ## NULL is returned on error/out-of-bounds conditions, in this case we set
     ## the "peak" to just be the (trimmed) fenceposts of this "island"
     if (is.null(e) || length(e) == 0L) {
-      e <- IRanges(qstart, qend)
-      values(e) <- DataFrame(fishy=TRUE)
+      if (qstart < ignore.from.start || qend > ignore.from.end) {
+        ## TODO: This needs to be refactored.
+        ## If the inferred peak bounds are out of range given the ignore*
+        ## params, we will junk this peak
+        return(NULL)
+      } else {
+        e <- IRanges(qstart, qend)
+        values(e) <- DataFrame(fishy=TRUE)
+      }
     } else {
       e <- shift(e, -bandwidth + qstart)
       values(e) <- DataFrame(fishy=rep(FALSE, length(e)))
