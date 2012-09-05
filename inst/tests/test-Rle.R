@@ -24,7 +24,7 @@ test_that("Rle expansion works", {
 })
 
 test_that("Convolution over sparse Rle is bueno", {
-  cvr <- readRDS(system.file('extdata', 'coverage.rda', package="biosignals"))
+  cvr <- readRDS(system.file('extdata', 'coverage.rds', package="biosignals"))
   all.islands <- slice(cvr, lower=0, includeLower=FALSE, rangesOnly=TRUE)
   
   ## these look like "normal" signals

@@ -161,7 +161,7 @@ if (FALSE) {
   library(biosignals)
   library(GenomicRanges)
   library(BSgenome.Hsapiens.UCSC.hg19)
-  cvr <- readRDS("/Users/stavros/cBio/projects/biosignals/biosignals-pkg/inst/extdata/coverage.rda")
+  cvr <- readRDS("/Users/stavros/cBio/projects/biosignals/biosignals-pkg/inst/extdata/coverage.rds")
   bchr <- unmasked(Hsapiens$chr21)
   ## cvr <- load.it('')
   ## islands <- slice(x, lower=1, rangesOnly=TRUE)
