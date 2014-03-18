@@ -1,19 +1,25 @@
 Package: biosignals
 Title: Smoothing and peak/edge finding in 1D data (signal vectors).
+Description: Do many things you want to do to "signal vectors."
+  The part of the code in this package to find edges in a 1d signal is adapted
+  from the MATLAB edge_detector_1d written by the CISMM group at UNC
+  (see URLs for references).
 Version: 0.1.0
 Author: Steve Lianoglou
 Maintainer: Steve Lianoglou <slianoglou@gmail.com>
-Description: Do many things you want to do to "signal vectors."
-  .
-  The part of the code in this package to find edges in a 1d signal is adapted
-  from the MATLAB edge_detector_1d written by the CISMM group at UNC.
-  .
-  See URLs for references.
+Depends:
+  R (>= 3.0.2),
+  IRanges (>= 1.21.34)
+Imports:
+  Rcpp (>= 0.11.1),
+  IRanges (>= 1.21.34)
+Suggests:
+  testthat (>= 0.8.1),
+  roxygen2 (>= 4.0)
+LinkingTo: IRanges, Rcpp
+VignetteBuilder: knitr
+LazyLoad: yes
+LazyData: yes
 License: GPL (>= 3)
-Depends: R (>= 2.13.0), IRanges, Rcpp (>= 0.9.7)
-Imports: Rcpp, methods, IRanges
-Suggests: testthat (>= 0.5)
-LinkingTo: IRanges,Rcpp
 URL: http://lianos.github.com/biosignals/,
      http://cismm.cs.unc.edu/resources/tutorials/edge-detector-1d-tutorial/
-Repository: CRAN
